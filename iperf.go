@@ -32,11 +32,11 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
 	c.SetIncludeServer(false) //true
-	c.SetStreams(1)           // 4
-	c.SetTimeSec(30)
+	c.SetStreams(4)           // 4
+	c.SetTimeSec(10)
 	c.SetInterval(1)
-	c.SetPort(portNumber)
-	c.SetMSS(transmissionMSS)
+	c.SetPort(portNumber)     //5201
+	c.SetMSS(transmissionMSS) //0
 	if doDownloadTest {
 		c.SetReverse(true)
 		direction = "Download"
