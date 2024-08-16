@@ -15,7 +15,7 @@ var (
 	// blockSelect     int
 	testInterval                = 10
 	portNumber                  = 5201
-	transmissionMSS             = 0 //1460
+	transmissionMSS             = 1460
 	cPrompt                     = color.New(color.BgMagenta)
 	x               interface{} = 42
 )
