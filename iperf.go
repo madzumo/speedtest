@@ -27,14 +27,18 @@ var blockWindow = map[int][]int{
 	12: {55, 60},
 }
 
-func runClient(serverIP string) bool {
+func runClient(serverIP string, doUploadTest bool) bool {
+	direction := "DOWNload"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
 	c.SetIncludeServer(false) //true
 	c.SetStreams(1)           // 4
 	c.SetTimeSec(30)
 	c.SetInterval(1)
-
+	if doUploadTest {
+		c.SetReverse(true)
+		direction = "UPload"
+	}
 	err := c.Start()
 	if err != nil {
 		fmt.Printf("failed to start client: %v\n", err)
@@ -66,10 +70,10 @@ func runClient(serverIP string) bool {
 				if mbps <= 0 {
 					return false
 				}
-				if _, err := fmt.Fprintf(fileWriter, "[%s] Transfer Rate: %.2f Mbps\n", currentTime, mbps); err != nil {
+				if _, err := fmt.Fprintf(fileWriter, "[%s] %s Rate: %.2f Mbps\n", currentTime, direction, mbps); err != nil {
 					fmt.Printf("failed to write to file: %v\n", err)
 				} else {
-					fmt.Printf("[%s] Transfer Rate: %.2f Mbps\n", currentTime, mbps)
+					fmt.Printf("[%s] %s Rate: %.2f Mbps\n", currentTime, direction, mbps)
 					// fmt.Print(c.Report().String())
 				}
 			}

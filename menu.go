@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/fatih/color"
 )
 
+var Red = "\033[31m"
 var lightningBolt = `
 .----------------.  .----------------.  .----------------.  .----------------.  .----------------. 
 | .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |
@@ -19,20 +22,24 @@ var lightningBolt = `
 `
 
 func printMenu() int {
+	c1 := color.New(color.BgRed)
+	c2 := color.New(color.FgGreen).Add(color.Bold)
+	c3 := color.New(color.FgHiBlue).Add(color.Bold)
+	c4 := color.New(color.FgHiYellow)
+	c5 := color.New(color.FgRed)
+	c1.Println(lightningBolt)
 	fmt.Println("==========================================")
-	fmt.Println(lightningBolt)
+	c2.Printf("Server IP: %s\n", serverIP)
+	c2.Printf("Block Time: %d\n", blockSelect)
+	c2.Printf("Port Number: %d\n", portNumber)
+	c2.Printf("Test Interval: %d min\n", testInterval)
 	fmt.Println("==========================================")
-	fmt.Println("1. Change Server IP")
-	fmt.Println("2. Change Block Time (1-12)")
-	fmt.Println("3. Change Port Number")
-	fmt.Println("4. Change Test Interval")
-	fmt.Println("5. RUN Client")
-	fmt.Println("6. QUIT")
-	fmt.Println("==========================================")
-	fmt.Printf("Server IP: %s\n", serverIP)
-	fmt.Printf("Block Time: %d\n", blockSelect)
-	fmt.Printf("Port Number: %d\n", portNumber)
-	fmt.Printf("Test Interval: %d min\n", testInterval)
+	c3.Println("1. Change Server IP")
+	c3.Println("2. Change Block Time (1-12)")
+	c3.Println("3. Change Port Number")
+	c3.Println("4. Change Test Interval")
+	c4.Println("5. RUN Client")
+	c5.Println("6. QUIT")
 	fmt.Println("==========================================")
 
 	menuOption := 0

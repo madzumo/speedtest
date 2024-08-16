@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	serverIP     = "137.184.149.146"
+	serverIP     = "10.132.132.190"
 	blockSelect  int
-	testInterval = 15
+	testInterval = 10
 	portNumber   = 5201
 )
 
@@ -46,7 +46,7 @@ func main() {
 			fmt.Scan(&testInterval)
 			if testInterval > 60 {
 				testInterval = 15
-				fmt.Print("Invalid Test Interval in Minutes...Press Enter to continue.")
+				fmt.Print("Invalid Test Interval Minutes...Press Enter to continue.")
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('\n')
 			}
@@ -55,8 +55,10 @@ func main() {
 			fmt.Println("Running Speed Tests...")
 			for {
 				if getBlockSelectWindow(blockSelect) {
-					if runClient(serverIP) {
-						time.Sleep(time.Duration(testInterval) * time.Minute)
+					if runClient(serverIP, false) {
+						if runClient(serverIP, true) {
+							time.Sleep(time.Duration(testInterval) * time.Minute)
+						}
 					} else {
 						fmt.Println("busy. retry in 10 seconds")
 						time.Sleep(10 * time.Second)
