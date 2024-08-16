@@ -54,6 +54,7 @@ func main() {
 			clearScreen()
 			fmt.Println("Running Speed Tests...")
 			fmt.Println("(your work is done. go get some coffee)")
+			fmt.Println("==========================================")
 			for {
 				if getBlockSelectWindow(blockSelect) {
 					if runClient(serverIP, false) {
