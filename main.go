@@ -11,11 +11,13 @@ import (
 )
 
 var (
-	serverIP     = "0.0.0.0"
-	blockSelect  int
-	testInterval = 10
-	portNumber   = 5201
-	cPrompt      = color.New(color.BgMagenta)
+	serverIP = "0.0.0.0"
+	// blockSelect     int
+	testInterval                = 10
+	portNumber                  = 5201
+	transmissionMSS             = 1460
+	cPrompt                     = color.New(color.BgMagenta)
+	x               interface{} = 42
 )
 
 func main() {
@@ -31,25 +33,43 @@ func main() {
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('\n')
 			}
+		// case 2:
+		// 	cPrompt.Print("Enter Time Block #: ")
+		// 	fmt.Scan(&blockSelect)
+		// 	_, exists := blockWindow[blockSelect]
+		// 	if !exists {
+		// 		blockSelect = 0
+		// 		fmt.Print("Invalid Time block #...Press Enter to continue.")
+		// 		reader := bufio.NewReader(os.Stdin)
+		// 		_, _ = reader.ReadString('\n')
+		// 	}
 		case 2:
-			cPrompt.Print("Enter Time Block #: ")
-			fmt.Scan(&blockSelect)
-			_, exists := blockWindow[blockSelect]
-			if !exists {
-				blockSelect = 0
-				fmt.Print("Invalid Time block #...Press Enter to continue.")
+			cPrompt.Print("Enter Port Number: ")
+			fmt.Scan(&portNumber)
+			x = portNumber
+			if _, ok := x.(int); !ok {
+				portNumber = 5201
+				fmt.Print("Invalid Value. Must be numeric...Press Enter to continue.")
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('\n')
 			}
 		case 3:
-			cPrompt.Print("Enter Port Number: ")
-			fmt.Scan(&portNumber)
-		case 4:
 			cPrompt.Print("Enter Test Interval in Minutes: ")
 			fmt.Scan(&testInterval)
-			if testInterval > 60 {
-				testInterval = 15
-				fmt.Print("Invalid Test Interval Minutes...Press Enter to continue.")
+			x = testInterval
+			if _, ok := x.(int); !ok {
+				testInterval = 10
+				fmt.Print("Invalid Value. Must be numeric...Press Enter to continue.")
+				reader := bufio.NewReader(os.Stdin)
+				_, _ = reader.ReadString('\n')
+			}
+		case 4:
+			cPrompt.Print("Enter Max Segment Size: ")
+			fmt.Scan(&transmissionMSS)
+			x = transmissionMSS
+			if _, ok := x.(int); !ok {
+				transmissionMSS = 1460
+				fmt.Print("Invalid Value. Must be numeric...Press Enter to continue.")
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('\n')
 			}
@@ -59,16 +79,16 @@ func main() {
 			fmt.Println("(your work is done. go get some coffee)")
 			fmt.Println("==========================================")
 			for {
-				if getBlockSelectWindow(blockSelect) {
-					if runClient(serverIP, false) {
-						if runClient(serverIP, true) {
-							time.Sleep(time.Duration(testInterval) * time.Minute)
-						}
-					} else {
-						fmt.Println("busy. retry in 10 seconds")
-						time.Sleep(10 * time.Second)
+				// if getBlockSelectWindow(blockSelect) {
+				if runClient(serverIP, false) {
+					if runClient(serverIP, true) {
+						time.Sleep(time.Duration(testInterval) * time.Minute)
 					}
+				} else {
+					fmt.Println("busy. retry in 10 seconds")
+					time.Sleep(10 * time.Second)
 				}
+				// }
 			}
 		case 6:
 			return
