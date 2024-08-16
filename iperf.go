@@ -27,17 +27,18 @@ var blockWindow = map[int][]int{
 	12: {55, 60},
 }
 
-func runClient(serverIP string, doUploadTest bool) bool {
-	direction := "DOWNload"
+func runClient(serverIP string, doDownloadTest bool) bool {
+	direction := "Upload"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
 	c.SetIncludeServer(false) //true
 	c.SetStreams(1)           // 4
 	c.SetTimeSec(30)
 	c.SetInterval(1)
-	if doUploadTest {
+	c.SetPort(portNumber)
+	if doDownloadTest {
 		c.SetReverse(true)
-		direction = "UPload"
+		direction = "Download"
 	}
 	err := c.Start()
 	if err != nil {
