@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	serverIP     = "10.132.132.190"
+	serverIP     = "137.184.149.146"
 	blockSelect  int
 	testInterval = 10
 	portNumber   = 5201
