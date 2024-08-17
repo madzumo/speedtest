@@ -1,4 +1,4 @@
-module github.com/madzumo/speed-test
+module github.com/madzumo/speedtest
 
 go 1.22.2
 
