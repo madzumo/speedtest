@@ -1,6 +1,7 @@
 # Speed Tests
 
-A self running app that runs network bandwidth speed test. 
+A self running app that runs network bandwidth speed test.
+ 
 It uses [speedtest.net](https://www.speedtest.net/) for the Internet speed test and [Iperf 3.0](https://iperf.fr/iperf-download.php) for the direct server test.
 
 ## Features
