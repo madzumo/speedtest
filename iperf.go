@@ -10,7 +10,7 @@ import (
 	"github.com/BGrewell/go-iperf"
 )
 
-var logFileName = "iperf3_report.txt"
+var logFileName string
 
 func runClient(serverIP string, doDownloadTest bool) bool {
 	direction := "🖥️Client->Server (Upload)"
@@ -36,6 +36,7 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 
 	<-c.Done
 
+	setLogFileName()
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 	fileWriter, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -80,4 +81,13 @@ func isPortOpen(serverIP string, port int, timeout time.Duration) bool {
 	}
 	conn.Close()
 	return true
+}
+
+func setLogFileName() {
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error gettign hostname of client:", err)
+	} else {
+		logFileName = fmt.Sprintf("iperf3_%s.txt", hostname)
+	}
 }

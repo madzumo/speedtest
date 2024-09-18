@@ -11,15 +11,16 @@ It does the following:
     - Frequency time interval
     - MSS segment size for advanced testing
 
+![Menu](readme.png)
+
 ## How to Run
 - Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change.
 ```
 sudo apt install iperf3
-iperf3 -s
+iperf3 -s -p 5201
 ```
 
 - Run latest .exe release
 - Choose **Option 1**: to enter Server IP address
 - Choose **Option 5**: to Run the test with default settings
 
-![Menu](readme.png)
