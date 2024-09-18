@@ -1,16 +1,25 @@
 # Speed Test with Iperf3
 
-This is a self running app that runs iperf3 speed test to a remote server host. It runs every 10 minutes and saves the result to a log file in the same location as the executable. You can run this utility on multiple clients with just one iperf3 server. Options you can change: port number, frequency time interval, and MSS segment size for various testing.
+This is a self running app that runs speed tests using [Iperf 3.0](https://iperf.fr/iperf-download.php)
+
+It does the following:
+- Allows you to run iperf tests on on multiple clients with just one iperf3 server.
+- Runs consistenly at whatever interval times you desire (10 min is the default).
+- Saves the result to a log file in the same location as the executable for documentation.
+- Options you can change: 
+    - Port number of the server
+    - Frequency time interval
+    - MSS segment size for advanced testing
 
 ## How to Run
-- Setup iperf on a remote server 
+- Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change.
 ```
 sudo apt install iperf3
 iperf3 -s
 ```
 
-- Run latest release
-- Option 1: Enter the severs Server IP address
-- Option 5: Run the test with default settings
+- Run latest .exe release
+- Choose **Option 1**: to enter Server IP address
+- Choose **Option 5**: to Run the test with default settings
 
 ![Menu](readme.png)
