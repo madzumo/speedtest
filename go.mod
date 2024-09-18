@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/BGrewell/go-iperf v0.0.0-20240522025150-6a2b45559210
 	github.com/fatih/color v1.17.0
+	github.com/showwin/speedtest-go v1.7.9
 )
 
 require (

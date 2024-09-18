@@ -10,10 +10,8 @@ import (
 	"github.com/BGrewell/go-iperf"
 )
 
-var logFileName string
-
 func runClient(serverIP string, doDownloadTest bool) bool {
-	direction := "🖥️Client->Server (Upload)"
+	direction := "🖥️Client->🐒Server (Upload)"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
 	c.SetIncludeServer(false) //true
@@ -26,7 +24,7 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 	if doDownloadTest {
 		c.SetReverse(true)
 		c.SetStreams(4) //
-		direction = "Server->Client🖥️ (Download)"
+		direction = "🐒Server->Client🖥️ (Download)"
 	}
 	err := c.Start()
 	if err != nil {
@@ -35,15 +33,6 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 	}
 
 	<-c.Done
-
-	setLogFileName()
-	currentTime := time.Now().Format("2006-01-02 15:04:05")
-	fileWriter, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("failed to open Log file: %v\n", err)
-		return false
-	}
-	defer fileWriter.Close()
 
 	reportX := c.Report()
 	var reportData map[string]interface{}
@@ -60,17 +49,12 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 				if mbps <= 0 {
 					return false
 				}
-				if _, err := fmt.Fprintf(fileWriter, "[%s] %s Rate: %.2f Mbps (MSS:%d)\n", currentTime, direction, mbps, transmissionMSS); err != nil {
-					fmt.Printf("failed to write to file: %v\n", err)
-				} else {
-					fmt.Printf("[%s] %s Rate: %.2f Mbps\n", currentTime, direction, mbps)
-					// fmt.Print(c.Report().String())
-				}
+				logX := fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
+				writeLogFile(logX)
 			}
 		}
 	}
 	return true
-
 }
 
 func isPortOpen(serverIP string, port int, timeout time.Duration) bool {
@@ -81,13 +65,4 @@ func isPortOpen(serverIP string, port int, timeout time.Duration) bool {
 	}
 	conn.Close()
 	return true
-}
-
-func setLogFileName() {
-	hostname, err := os.Hostname()
-	if err != nil {
-		fmt.Println("Error gettign hostname of client:", err)
-	} else {
-		logFileName = fmt.Sprintf("iperf3_%s.txt", hostname)
-	}
 }

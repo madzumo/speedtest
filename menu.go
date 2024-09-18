@@ -42,7 +42,7 @@ func printMenu() int {
 	c3.Println("2. Change Port Number")
 	c3.Println("3. Change Test Interval")
 	c3.Println("4. Change MSS")
-	c4.Println("5. RUN Client")
+	c4.Println("5. RUN All Tests")
 	c5.Println("6. QUIT")
 	fmt.Println("==========================================")
 

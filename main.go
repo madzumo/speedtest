@@ -18,10 +18,15 @@ var (
 	transmissionMSS             = 0
 	cPrompt                     = color.New(color.BgMagenta)
 	cError                      = color.New(color.BgBlue)
+	cPromptFG                   = color.New(color.FgMagenta)
 	x               interface{} = 42
 )
 
 func main() {
+	speedApp()
+}
+
+func speedApp() {
 	for {
 		clearScreen()
 		switch printMenu() {
@@ -66,22 +71,27 @@ func main() {
 			}
 		case 5:
 			clearScreen()
-			cPrompt.Println("Running iperf Speed Tests...")
-			fmt.Println("(your work here is done✅ go get some coffee☕)")
-			fmt.Println("==============================================")
+			cPromptFG.Println("==============================================")
+			cPrompt.Println("Running Speed Tests...")
+			// fmt.Println("(your work here is done✅ go get some coffee☕)")
+			cPromptFG.Println("==============================================")
 
 			if !isPortOpen(serverIP, portNumber, 5*time.Second) {
-				cError.Printf("Cannot connect to iperf3 server on: %s\nServer may not be running\nEnter 'q' to return\n", serverIP)
+				cError.Printf("Cannot connect to iperf3 server on: %s Server may not be running\nEnter 'q' to return\n", serverIP)
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('q')
 			} else {
 				for {
+					//internet
+					testResult := runSpeedTestNet()
+					writeLogFile(testResult)
+					//iperf
 					if runClient(serverIP, false) {
 						if runClient(serverIP, true) {
 							time.Sleep(time.Duration(testInterval) * time.Minute)
 						}
 					} else {
-						fmt.Println("busy. retry in 10 seconds")
+						fmt.Println("iperf server busy. retry in 10 seconds")
 						time.Sleep(10 * time.Second)
 					}
 				}
@@ -90,4 +100,30 @@ func main() {
 			return
 		}
 	}
+}
+
+func setLogFileName() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error gettign hostname of client:", err)
+	} else {
+		return fmt.Sprintf("iperf3_%s.txt", hostname)
+	}
+	return ""
+}
+
+func writeLogFile(logData string) {
+	logFileName := setLogFileName()
+	fileWriter, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("failed to create/open Log file: %v\n", err)
+	}
+	defer fileWriter.Close()
+
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	if _, err := fmt.Fprintf(fileWriter, "[%s]%s\n", currentTime, logData); err != nil {
+		fmt.Printf("failed to write to Log file: %v\n", err)
+	}
+
+	fmt.Printf("[%s]%s\n", currentTime, logData)
 }
