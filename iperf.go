@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -12,18 +13,20 @@ import (
 var logFileName = "iperf3_report.txt"
 
 func runClient(serverIP string, doDownloadTest bool) bool {
-	direction := "Upload"
+	direction := "🖥️Client->Server (Upload)"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
-	c.SetIncludeServer(true) //true
+	c.SetIncludeServer(false) //true
 	c.SetTimeSec(10)
 	c.SetInterval(1)
 	c.SetPort(portNumber) //5201
-	// c.SetMSS(transmissionMSS) //0
+	if transmissionMSS != 0 {
+		c.SetMSS(transmissionMSS) //0
+	}
 	if doDownloadTest {
 		c.SetReverse(true)
 		c.SetStreams(4) //
-		direction = "Download"
+		direction = "Server->Client🖥️ (Download)"
 	}
 	err := c.Start()
 	if err != nil {
@@ -50,25 +53,31 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 	}
 
 	if end, ok := reportData["end"].(map[string]interface{}); ok {
-		var bitsPerSecond float64
-		if doDownloadTest {
-			if sumReceived, ok := end["sum_received"].(map[string]interface{}); ok {
-				bitsPerSecond = sumReceived["bits_per_second"].(float64)
-			}
-		} else {
-			if sumSent, ok := end["sum_sent"].(map[string]interface{}); ok {
-				bitsPerSecond = sumSent["bits_per_second"].(float64)
-			}
-		}
-
-		if bitsPerSecond > 0 {
-			mbps := bitsPerSecond / (1024 * 1024)
-			if _, err := fmt.Fprintf(fileWriter, "[%s] %s Bitrate: %.2f Mbps (MSS:%d)\n", currentTime, direction, mbps, transmissionMSS); err != nil {
-				fmt.Printf("failed to write to file: %v\n", err)
-			} else {
-				fmt.Printf("[%s] %s Bitrate: %.2f Mbps\n", currentTime, direction, mbps)
+		if sumSent, ok := end["sum_sent"].(map[string]interface{}); ok {
+			if bitsPerSecond, ok := sumSent["bits_per_second"].(float64); ok {
+				mbps := bitsPerSecond / (1024 * 1024)
+				if mbps <= 0 {
+					return false
+				}
+				if _, err := fmt.Fprintf(fileWriter, "[%s] %s Rate: %.2f Mbps (MSS:%d)\n", currentTime, direction, mbps, transmissionMSS); err != nil {
+					fmt.Printf("failed to write to file: %v\n", err)
+				} else {
+					fmt.Printf("[%s] %s Rate: %.2f Mbps\n", currentTime, direction, mbps)
+					// fmt.Print(c.Report().String())
+				}
 			}
 		}
 	}
+	return true
+
+}
+
+func isPortOpen(serverIP string, port int, timeout time.Duration) bool {
+	address := fmt.Sprintf("%s:%d", serverIP, port)
+	conn, err := net.DialTimeout("tcp", address, timeout)
+	if err != nil {
+		return false
+	}
+	conn.Close()
 	return true
 }

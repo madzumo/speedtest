@@ -15,8 +15,9 @@ var (
 	// blockSelect     int
 	testInterval                = 10
 	portNumber                  = 5201
-	transmissionMSS             = 1460
+	transmissionMSS             = 0
 	cPrompt                     = color.New(color.BgMagenta)
+	cError                      = color.New(color.BgBlue)
 	x               interface{} = 42
 )
 
@@ -69,22 +70,21 @@ func main() {
 			fmt.Println("(your work here is done✅ go get some coffee☕)")
 			fmt.Println("==============================================")
 
-			for {
+			if !isPortOpen(serverIP, portNumber, 5*time.Second) {
+				cError.Printf("Cannot connect to iperf3 server on: %s\nServer may not be running\nEnter 'q' to return\n", serverIP)
+				reader := bufio.NewReader(os.Stdin)
+				_, _ = reader.ReadString('q')
+			} else {
 				for {
 					if runClient(serverIP, false) {
-						break
+						if runClient(serverIP, true) {
+							time.Sleep(time.Duration(testInterval) * time.Minute)
+						}
+					} else {
+						fmt.Println("busy. retry in 10 seconds")
+						time.Sleep(10 * time.Second)
 					}
-					fmt.Println("busy. retry in 10 seconds")
-					time.Sleep(10 * time.Second)
 				}
-				for {
-					if runClient(serverIP, true) {
-						break
-					}
-					fmt.Println("busy. retry in 10 seconds")
-					time.Sleep(10 * time.Second)
-				}
-				time.Sleep(time.Duration(testInterval) * time.Minute)
 			}
 		case 6:
 			return
