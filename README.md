@@ -1,9 +1,9 @@
 # Speed Tests
 
-This is a self running app that runs an Internet and direct server speed test. 
-It usses [speedtest.net](https://www.speedtest.net/) for the Internet speed test and [Iperf 3.0](https://iperf.fr/iperf-download.php) for the direct server test.
+A self running app that runs network bandwidth speed test. 
+It uses [speedtest.net](https://www.speedtest.net/) for the Internet speed test and [Iperf 3.0](https://iperf.fr/iperf-download.php) for the direct server test.
 
-It does the following:
+## Features
 - Allows you to run iperf tests on on multiple clients with just one iperf3 server.
 - Runs consistenly at whatever interval times you desire (10 min is the default).
 - Saves the result to a log file in the same location as the executable for documentation.
