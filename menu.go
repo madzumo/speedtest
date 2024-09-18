@@ -32,7 +32,11 @@ func printMenu() int {
 	// c2.Printf("Block Time: %d\n", blockSelect)
 	c2.Printf("Port Number: %d\n", portNumber)
 	c2.Printf("Test Interval: %d min\n", testInterval)
-	c2.Printf("MSS (max segment size): %d\n", transmissionMSS)
+	if transmissionMSS == 0 {
+		c2.Printf("MSS (max segment size): Auto\n")
+	} else {
+		c2.Printf("MSS (max segment size): %d\n", transmissionMSS)
+	}
 	fmt.Println("==========================================")
 	c3.Println("1. Change Server IP")
 	c3.Println("2. Change Port Number")

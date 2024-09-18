@@ -11,34 +11,18 @@ import (
 
 var logFileName = "iperf3_report.txt"
 
-// var blockWindow = map[int][]int{
-// 	0:  {1, 60},
-// 	1:  {1, 4},
-// 	2:  {5, 9},
-// 	3:  {10, 14},
-// 	4:  {15, 19},
-// 	5:  {20, 24},
-// 	6:  {25, 29},
-// 	7:  {30, 34},
-// 	8:  {35, 39},
-// 	9:  {40, 44},
-// 	10: {45, 49},
-// 	11: {50, 54},
-// 	12: {55, 60},
-// }
-
 func runClient(serverIP string, doDownloadTest bool) bool {
 	direction := "Upload"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
-	c.SetIncludeServer(false) //true
-	c.SetStreams(4)           // 4
+	c.SetIncludeServer(true) //true
 	c.SetTimeSec(10)
 	c.SetInterval(1)
-	c.SetPort(portNumber)     //5201
-	c.SetMSS(transmissionMSS) //0
+	c.SetPort(portNumber) //5201
+	// c.SetMSS(transmissionMSS) //0
 	if doDownloadTest {
 		c.SetReverse(true)
+		c.SetStreams(4) //
 		direction = "Download"
 	}
 	err := c.Start()
@@ -66,28 +50,25 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 	}
 
 	if end, ok := reportData["end"].(map[string]interface{}); ok {
-		if sumSent, ok := end["sum_sent"].(map[string]interface{}); ok {
-			if bitsPerSecond, ok := sumSent["bits_per_second"].(float64); ok {
-				mbps := bitsPerSecond / (1024 * 1024)
-				if mbps <= 0 {
-					return false
-				}
-				if _, err := fmt.Fprintf(fileWriter, "[%s] %s Rate: %.2f Mbps (MSS:%d)\n", currentTime, direction, mbps, transmissionMSS); err != nil {
-					fmt.Printf("failed to write to file: %v\n", err)
-				} else {
-					fmt.Printf("[%s] %s Rate: %.2f Mbps\n", currentTime, direction, mbps)
-					// fmt.Print(c.Report().String())
-				}
+		var bitsPerSecond float64
+		if doDownloadTest {
+			if sumReceived, ok := end["sum_received"].(map[string]interface{}); ok {
+				bitsPerSecond = sumReceived["bits_per_second"].(float64)
+			}
+		} else {
+			if sumSent, ok := end["sum_sent"].(map[string]interface{}); ok {
+				bitsPerSecond = sumSent["bits_per_second"].(float64)
+			}
+		}
+
+		if bitsPerSecond > 0 {
+			mbps := bitsPerSecond / (1024 * 1024)
+			if _, err := fmt.Fprintf(fileWriter, "[%s] %s Bitrate: %.2f Mbps (MSS:%d)\n", currentTime, direction, mbps, transmissionMSS); err != nil {
+				fmt.Printf("failed to write to file: %v\n", err)
+			} else {
+				fmt.Printf("[%s] %s Bitrate: %.2f Mbps\n", currentTime, direction, mbps)
 			}
 		}
 	}
 	return true
 }
-
-// func getBlockSelectWindow(blockSelect int) bool {
-// 	currentTime := time.Now()
-// 	if currentTime.Minute() >= blockWindow[blockSelect][0] && currentTime.Minute() <= blockWindow[blockSelect][1] {
-// 		return true
-// 	}
-// 	return false
-// }

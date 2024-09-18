@@ -33,16 +33,6 @@ func main() {
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('\n')
 			}
-		// case 2:
-		// 	cPrompt.Print("Enter Time Block #: ")
-		// 	fmt.Scan(&blockSelect)
-		// 	_, exists := blockWindow[blockSelect]
-		// 	if !exists {
-		// 		blockSelect = 0
-		// 		fmt.Print("Invalid Time block #...Press Enter to continue.")
-		// 		reader := bufio.NewReader(os.Stdin)
-		// 		_, _ = reader.ReadString('\n')
-		// 	}
 		case 2:
 			cPrompt.Print("Enter Port Number: ")
 			fmt.Scan(&portNumber)
@@ -75,20 +65,26 @@ func main() {
 			}
 		case 5:
 			clearScreen()
-			cPrompt.Println("Running Speed Tests...")
-			fmt.Println("(your work is done. go get some coffee)")
-			fmt.Println("==========================================")
+			cPrompt.Println("Running iperf Speed Tests...")
+			fmt.Println("(your work here is done✅ go get some coffee☕)")
+			fmt.Println("==============================================")
+
 			for {
-				// if getBlockSelectWindow(blockSelect) {
-				if runClient(serverIP, false) {
-					if runClient(serverIP, true) {
-						time.Sleep(time.Duration(testInterval) * time.Minute)
+				for {
+					if runClient(serverIP, false) {
+						break
 					}
-				} else {
 					fmt.Println("busy. retry in 10 seconds")
 					time.Sleep(10 * time.Second)
 				}
-				// }
+				for {
+					if runClient(serverIP, true) {
+						break
+					}
+					fmt.Println("busy. retry in 10 seconds")
+					time.Sleep(10 * time.Second)
+				}
+				time.Sleep(time.Duration(testInterval) * time.Minute)
 			}
 		case 6:
 			return
