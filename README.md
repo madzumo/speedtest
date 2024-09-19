@@ -26,4 +26,4 @@ iperf3 -s -p 5201
 - Choose **Option 5**: to Run Iperf3 test only with default settings
 - Choose **Option 7**: to Run both Inernet Speed test and Iperf3 test
 
-![Menu](readme.png)
+![Menu](speed.png)
