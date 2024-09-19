@@ -23,13 +23,15 @@ var (
 )
 
 func main() {
+
 	speedApp()
 }
 
 func speedApp() {
 	for {
 		clearScreen()
-		switch printMenu() {
+		userSelect := printMenu()
+		switch userSelect {
 		case 1:
 			cPrompt.Print("Enter Server IP: ")
 			fmt.Scan(&serverIP)
@@ -69,22 +71,19 @@ func speedApp() {
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('\n')
 			}
-		case 5:
-			clearScreen()
-			cPromptFG.Println("==============================================")
-			cPrompt.Println("Running Speed Tests...")
-			// fmt.Println("(your work here is done✅ go get some coffee☕)")
-			cPromptFG.Println("==============================================")
-
+		case 5, 7:
+			setupTestsHeader()
 			if !isPortOpen(serverIP, portNumber, 5*time.Second) {
 				cError.Printf("Cannot connect to iperf3 server on: %s Server may not be running\nEnter 'q' to return\n", serverIP)
 				reader := bufio.NewReader(os.Stdin)
 				_, _ = reader.ReadString('q')
 			} else {
 				for {
-					//internet
-					testResult := runSpeedTestNet()
-					writeLogFile(testResult)
+					if userSelect == 7 {
+						//internet speed test
+						testResult := runSpeedTestNet()
+						writeLogFile(testResult)
+					}
 					//iperf
 					if runClient(serverIP, false) {
 						if runClient(serverIP, true) {
@@ -97,6 +96,20 @@ func speedApp() {
 				}
 			}
 		case 6:
+			setupTestsHeader()
+			for {
+				testResult := runSpeedTestNet()
+				writeLogFile(testResult)
+				time.Sleep(time.Duration(testInterval) * time.Minute)
+			}
+		// case 7:
+		// 	var urlTest string
+		// 	fmt.Print("Input URL to test:")
+		// 	fmt.Scan(&urlTest)
+		// 	doPlay(urlTest)
+		// 	reader2 := bufio.NewReader(os.Stdin)
+		// 	_, _ = reader2.ReadString('q')
+		case 8:
 			return
 		}
 	}
@@ -126,4 +139,12 @@ func writeLogFile(logData string) {
 	}
 
 	fmt.Printf("[%s]%s\n", currentTime, logData)
+}
+
+func setupTestsHeader() {
+	clearScreen()
+	cPromptFG.Println("==============================================")
+	cPrompt.Println("Running Speed Tests...")
+	// fmt.Println("(your work here is done✅ go get some coffee☕)")
+	cPromptFG.Println("==============================================")
 }

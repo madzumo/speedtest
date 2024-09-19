@@ -23,6 +23,7 @@ iperf3 -s -p 5201
 
 - Run latest .exe release
 - Choose **Option 1**: to enter Server IP address
-- Choose **Option 5**: to Run the test with default settings
+- Choose **Option 5**: to Run Iperf3 test only with default settings
+- Choose **Option 7**: to Run both Inernet Speed test and Iperf3 test
 
 ![Menu](readme.png)

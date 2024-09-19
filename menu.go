@@ -29,9 +29,8 @@ func printMenu() int {
 	c1.Println(menuText)
 	fmt.Println("==========================================")
 	c2.Printf("Server IP: %s\n", serverIP)
-	// c2.Printf("Block Time: %d\n", blockSelect)
 	c2.Printf("Port Number: %d\n", portNumber)
-	c2.Printf("Test Interval: %d min\n", testInterval)
+	c2.Printf("Repeat Test Every: %d min\n", testInterval)
 	if transmissionMSS == 0 {
 		c2.Printf("MSS (max segment size): Auto\n")
 	} else {
@@ -40,10 +39,12 @@ func printMenu() int {
 	fmt.Println("==========================================")
 	c3.Println("1. Change Server IP")
 	c3.Println("2. Change Port Number")
-	c3.Println("3. Change Test Interval")
+	c3.Println("3. Change Repeat Test Interval")
 	c3.Println("4. Change MSS")
-	c4.Println("5. RUN All Tests")
-	c5.Println("6. QUIT")
+	c4.Println("5. RUN Iperf3 Test Only")
+	c4.Println("6. RUN Internet Speed Test Only")
+	c4.Println("7. RUN ALL test")
+	c5.Println("8. QUIT")
 	fmt.Println("==========================================")
 
 	menuOption := 0
