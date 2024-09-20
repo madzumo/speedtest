@@ -36,7 +36,7 @@ func runSpeedTestNet() (testresult string) {
 		s.DownloadTest()
 		s.UploadTest()
 		// Note: The unit of s.DLSpeed, s.ULSpeed is bytes per second, this is a float64.
-		testresult = fmt.Sprintf("🌎Internet Test-> Down:%s, Up:%s, Latency:%s", s.DLSpeed, s.ULSpeed, s.Latency)
+		testresult = fmt.Sprintf("🌎SpeedTest.Net-> Down:%s, Up:%s, Latency:%s", s.DLSpeed, s.ULSpeed, s.Latency)
 		// fmt.Println(result)
 		s.Context.Reset() // reset counter
 	}
