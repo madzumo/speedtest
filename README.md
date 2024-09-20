@@ -6,14 +6,15 @@ It uses [speedtest.net](https://www.speedtest.net/) or [Cloud Flare](https://spe
 
 ## Features
 - Allows you to run Iperf tests on multiple clients simultaneously to just one Iperf3 server.
-- Runs consistenly at whatever interval times you desire (0 min is the default meaning run once only).
+- Runs consistenly at whatever interval times you desire (0 min is the default meaning run once).
 - Saves the result to a log file in the same location as the executable for documentation.
 - Runs Internet speed test on each pass to document client host bandwidth when performing the iper3 test.
 - Allows you to switch between speedtest.net or cloud flare.
 - Options you can change: 
     - Port number of the server
-    - Frequency time interval
+    - Repeat test time interval
     - MSS segment size for advanced LAN testing
+    - Internet speed test provider
 
 ## How to Run
 - Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change.
