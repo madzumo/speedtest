@@ -1,0 +1,7 @@
+[2024-09-21 17:10:36]Cloudflare Test -> Down:618, Up:35.5
+[2024-09-21 17:11:16]M-Labs Test-> Down:595.46 Mb/s, Up:34.95 Mb/s
+[2024-09-21 17:14:15]Cloudflare Test -> Down:648, Up:36.2
+[2024-09-21 17:14:55]M-Labs Test-> Down:611.18 Mb/s, Up:35.78 Mb/s
+[2024-09-21 17:19:36]Cloudflare Test -> Down:659, Up:36.2
+[2024-09-21 17:20:15]M-Labs Test-> Down:561.23 Mb/s, Up:34.86 Mb/s
+[2024-09-21 17:21:26]Cloudflare Test -> Down:607, Up:36.3
