@@ -35,10 +35,10 @@ iperf3 -s -p 5201
 
 ## Troubleshoot
 
-If this is running behind a firewall or proxy then that proxy server could be using a custom certificate authority (CA). This will result in the following error:
+If you are running this behind a firewall or an internal proxy that blocks direct access to the public resources then you will see this error:
 
 ```
 Error: self signed certificate in certificate chain
 ```
 
-To remedy this add a copy of your custom root certificate (cert.pem) in the same directory as this executable. Upon executing the Internet Speed Test it will scan if a *.pem file is located in the same directory and give you the option to use it to perform the test.
+This occurs becuase during the Internet Speed test chromium files are needed and downloaded from the Microsoft CDN. The requests of the proxy get intercepted with a custom untrusted certificate authority (CA) and it yields the above error. To remedy this add a copy of your custom root certificate (cert.pem) for your proxy server in the same directory as this executable. When you run the Internet Speed Test it will scan if a *.pem file is located in the same directory and give you the option to use before running the test.
