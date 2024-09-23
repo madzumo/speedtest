@@ -3,15 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"os"
-	"time"
 
 	"github.com/BGrewell/go-iperf"
+	"github.com/madzumo/speedtest/internal/helpers"
 )
 
-func runClient(serverIP string, doDownloadTest bool) bool {
-	// cPrompt2.Println("Running Iperf Test")
+func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) bool {
+	if !helpers.IsPortOpen(serverIP, portNumber) {
+		cp := helpers.NewPromptColor()
+		cp.Error.Println("Server unavailable. Iperf Server Client could be turned off.")
+		return false
+	}
 	direction := "🖥️Client->🐒Server (Upload)"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
@@ -55,15 +58,5 @@ func runClient(serverIP string, doDownloadTest bool) bool {
 			}
 		}
 	}
-	return true
-}
-
-func isPortOpen(serverIP string, port int, timeout time.Duration) bool {
-	address := fmt.Sprintf("%s:%d", serverIP, port)
-	conn, err := net.DialTimeout("tcp", address, timeout)
-	if err != nil {
-		return false
-	}
-	conn.Close()
 	return true
 }

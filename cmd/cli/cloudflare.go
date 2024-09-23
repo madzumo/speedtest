@@ -12,7 +12,7 @@ import (
 
 func cfTest(showBrowser bool) (testResult string) {
 	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, "Cloudflare Speed Test....", "202") // Run spinner in a goroutine
+	go bubbles.ShowSpinner(quit, "Cloudflare Speed Test....", "214") // Run spinner in a goroutine
 
 	// Start Playwright
 	pw, err := playwright.Run()
@@ -81,7 +81,7 @@ func cfTest(showBrowser bool) (testResult string) {
 
 	// Wait for 1 minute (60 seconds) to allow the test to complete
 	// fmt.Println("Waiting for test to complete...")
-	time.Sleep(38 * time.Second)
+	time.Sleep(35 * time.Second)
 
 	// Find the first occurrence of "Mbps" and get the preceding div's text content
 	locator := page.Locator(`text="Mbps"`).First().Locator("xpath=preceding-sibling::div[1]")
@@ -107,6 +107,7 @@ func cfTest(showBrowser bool) (testResult string) {
 	}
 
 	close(quit) // This will send a quitMsg to your spinner model
+	time.Sleep(1 * time.Second)
 	testResult = fmt.Sprintf("Cloudflare Test -> Down:%s, Up:%s", textDown, textUp)
 	cp := helpers.NewPromptColor()
 	cp.Normal.Println(testResult)

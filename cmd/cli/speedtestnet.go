@@ -3,23 +3,31 @@ package main
 import (
 	"fmt"
 
+	"time"
+
+	"github.com/madzumo/speedtest/internal/bubbles"
+	"github.com/madzumo/speedtest/internal/helpers"
 	"github.com/showwin/speedtest-go/speedtest"
 )
 
-func getServerLists() {
-	var speedtestClient = speedtest.New()
+// func getServerLists() {
+// 	var speedtestClient = speedtest.New()
 
-	user, _ := speedtestClient.FetchUserInfo()
+// 	user, _ := speedtestClient.FetchUserInfo()
 
-	serverList, _ := speedtestClient.FetchServers()
+// 	serverList, _ := speedtestClient.FetchServers()
 
-	fmt.Println(user)
-	fmt.Println("*********************************")
-	fmt.Println(serverList)
-	fmt.Println("*********************************")
-}
+// 	fmt.Println(user)
+// 	fmt.Println("*********************************")
+// 	fmt.Println(serverList)
+// 	fmt.Println("*********************************")
+// }
 
-func runSpeedTestNet() (testresult string) {
+func netTest() string {
+	var testResult string
+	quit := make(chan struct{})
+	go bubbles.ShowSpinner(quit, "Speedtest.NET Test....", "196") // Run spinner in a goroutine
+
 	var speedtestClient = speedtest.New()
 	// Get user's network information
 	// user, _ := speedtestClient.FetchUserInfo()
@@ -36,9 +44,14 @@ func runSpeedTestNet() (testresult string) {
 		s.DownloadTest()
 		s.UploadTest()
 		// Note: The unit of s.DLSpeed, s.ULSpeed is bytes per second, this is a float64.
-		testresult = fmt.Sprintf("🌎SpeedTest.Net-> Down:%s, Up:%s, Latency:%s", s.DLSpeed, s.ULSpeed, s.Latency)
-		// fmt.Println(result)
+		// testResult = fmt.Sprintf("🌎SpeedTest.Net-> Down:%s, Up:%s, Latency:%s", s.DLSpeed, s.ULSpeed, s.Latency)
+		testResult = fmt.Sprintf("SpeedTest.Net-> Down:%s, Up:%s", s.DLSpeed, s.ULSpeed)
+
 		s.Context.Reset() // reset counter
 	}
-	return testresult
+	close(quit)
+	time.Sleep(1 * time.Second)
+	cp := helpers.NewPromptColor()
+	cp.Normal.Println(testResult)
+	return testResult
 }

@@ -1,0 +1,10 @@
+{
+  "iperfServer": "0.0.0.0",
+  "iperfPort": 5201,
+  "repeatInterval": 0,
+  "MSS": 0,
+  "CloudFrontTest": true,
+  "MLabTest": false,
+  "SpeedNetTest": true,
+  "showBrowser": false
+}

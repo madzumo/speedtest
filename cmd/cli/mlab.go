@@ -12,7 +12,7 @@ import (
 
 func mlTest(showBrowser bool) (testResult string) {
 	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "201") // Run spinner in a goroutine
+	go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "183") // Run spinner in a goroutine
 
 	// Start Playwright
 	pw, err := playwright.Run()
@@ -72,7 +72,7 @@ func mlTest(showBrowser bool) (testResult string) {
 	}
 
 	// Wait to allow the test to complete
-	time.Sleep(38 * time.Second)
+	time.Sleep(35 * time.Second)
 
 	// Locating the first instance of an element with class "ng-binding" containing text "Mb/s"
 	speedLocator := page.Locator(".ng-binding:text-matches(\"[0-9]+\\.?[0-9]* Mb/s\", \"i\")").First()
@@ -103,6 +103,7 @@ func mlTest(showBrowser bool) (testResult string) {
 		log.Fatalf("could not stop Playwright: %v", err)
 	}
 	close(quit)
+	time.Sleep(1 * time.Second)
 	testResult = fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
 	cp := helpers.NewPromptColor()
 	cp.Normal.Println(testResult)
