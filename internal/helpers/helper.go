@@ -101,7 +101,7 @@ func SetPEMfiles() {
 
 func InstallPlaywright() (greatSuccess bool) {
 	greatSuccess = true
-	if err := playwright.Install(); err != nil {
+	if err := playwright.Install(&playwright.RunOptions{Browsers: []string{"chromium"}}); err != nil {
 		fmt.Println(LipErrorStyle.Render(fmt.Sprintf("could not install Playwright: %v\n", err)))
 		PauseTerminalScreen()
 		greatSuccess = false
