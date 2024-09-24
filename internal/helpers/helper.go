@@ -115,7 +115,7 @@ func SetLogFileName() string {
 	if err != nil {
 		fmt.Println("Error getting hostname of client:", err)
 	} else {
-		return fmt.Sprintf("iperf3_%s.txt", hostname)
+		return fmt.Sprintf("SpeedTest_%s.txt", hostname)
 	}
 	return ""
 }
