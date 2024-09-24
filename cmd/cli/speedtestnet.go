@@ -22,7 +22,7 @@ import (
 // 	fmt.Println("*********************************")
 // }
 
-func netTest() string {
+func netTest() {
 	var testResult string
 	quit := make(chan struct{})
 	go bubbles.ShowSpinner(quit, "Speedtest.NET Test....", "196") // Run spinner in a goroutine
@@ -51,5 +51,5 @@ func netTest() string {
 	close(quit)
 	time.Sleep(1 * time.Second)
 	fmt.Println(lipOutputStyle.Render(testResult))
-	return testResult
+	writeLogFile(testResult)
 }

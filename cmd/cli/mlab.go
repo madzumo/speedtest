@@ -105,5 +105,5 @@ func mlTest(showBrowser bool) {
 	time.Sleep(1 * time.Second)
 	testResult := fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
 	fmt.Println(lipOutputStyle.Render(testResult))
-
+	writeLogFile(testResult)
 }

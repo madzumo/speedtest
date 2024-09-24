@@ -69,9 +69,9 @@ func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmission
 					fmt.Println("Server is busy. Wait for 10 seconds")
 					return false, 1
 				}
-				resultData := fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
-				fmt.Println(resultData)
-				writeLogFile(resultData)
+				testResult := fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
+				fmt.Println(testResult)
+				writeLogFile(testResult)
 			}
 		}
 	}

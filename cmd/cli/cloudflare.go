@@ -109,4 +109,5 @@ func cfTest(showBrowser bool) {
 	time.Sleep(2 * time.Second)
 	testResult := fmt.Sprintf("Cloudflare Test -> Down:%s, Up:%s", textDown, textUp)
 	fmt.Println(lipOutputStyle.Render(testResult))
+	writeLogFile(testResult)
 }
