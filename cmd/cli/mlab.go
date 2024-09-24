@@ -9,7 +9,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func mlTest(showBrowser bool) (testResult string) {
+func mlTest(showBrowser bool) {
 	quit := make(chan struct{})
 	go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "57") // Run spinner in a goroutine
 
@@ -103,7 +103,7 @@ func mlTest(showBrowser bool) (testResult string) {
 	}
 	close(quit)
 	time.Sleep(1 * time.Second)
-	testResult = fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
+	testResult := fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
 	fmt.Println(lipOutputStyle.Render(testResult))
-	return testResult
+
 }

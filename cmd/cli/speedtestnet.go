@@ -50,6 +50,6 @@ func netTest() string {
 	}
 	close(quit)
 	time.Sleep(1 * time.Second)
-	fmt.Print(lipOutputStyle.Render(testResult))
+	fmt.Println(lipOutputStyle.Render(testResult))
 	return testResult
 }

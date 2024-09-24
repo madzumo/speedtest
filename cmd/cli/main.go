@@ -84,9 +84,26 @@ func menuSelection(menuSelect string, c *configSettings) {
 				}
 			}
 			if menuSelect == menuTOP[0] || menuSelect == menuTOP[2] {
-				if runIperf(c.IperfS, false, c.IperfP, 0) {
-					runIperf(c.IperfS, true, c.IperfP, 0)
+				for {
+					if complete, errorcode := runIperf(c.IperfS, false, c.IperfP, 0); !complete {
+						if errorcode == 1 {
+							time.Sleep(10 * time.Second)
+						} else {
+							break
+						}
+					} else {
+						if complete, errorcode := runIperf(c.IperfS, true, c.IperfP, 0); !complete {
+							if errorcode == 1 {
+								time.Sleep(10 * time.Second)
+							} else {
+								break
+							}
+						} else {
+							break
+						}
+					}
 				}
+
 			}
 
 			if c.Interval > 0 {

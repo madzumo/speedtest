@@ -9,7 +9,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func cfTest(showBrowser bool) (testResult string) {
+func cfTest(showBrowser bool) {
 	quit := make(chan struct{})
 	go bubbles.ShowSpinner(quit, "Cloudflare Speed Test....", "214") // Run spinner in a goroutine
 
@@ -105,9 +105,8 @@ func cfTest(showBrowser bool) (testResult string) {
 		log.Fatalf("could not stop Playwright: %v", err)
 	}
 
-	close(quit) // This will send a quitMsg to your spinner model
+	close(quit)
 	time.Sleep(2 * time.Second)
-	testResult = fmt.Sprintf("Cloudflare Test -> Down:%s, Up:%s", textDown, textUp)
+	testResult := fmt.Sprintf("Cloudflare Test -> Down:%s, Up:%s", textDown, textUp)
 	fmt.Println(lipOutputStyle.Render(testResult))
-	return testResult
 }
