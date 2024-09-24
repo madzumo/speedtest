@@ -76,6 +76,7 @@ func menuSelection(menuSelect string, c *configSettings) {
 				}
 			}
 			if menuSelect == menuTOP[0] || menuSelect == menuTOP[2] {
+				loopcount := 0
 				for {
 					if complete, errorcode := runIperf(c.IperfS, false, c.IperfP, 0); !complete {
 						if errorcode == 1 {
@@ -94,8 +95,12 @@ func menuSelection(menuSelect string, c *configSettings) {
 							break
 						}
 					}
+					loopcount += 1
+					if loopcount >= 4 {
+						fmt.Println(hp.LipErrorStyle.Render("To many retries. Iperf test will exit."))
+						break
+					}
 				}
-
 			}
 
 			if c.Interval > 0 {
