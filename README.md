@@ -28,7 +28,7 @@ iperf3 -s -p 5201
 - **Option 2**: Internet speeds tests only.
 - **Option 3**: Iperf test only.
 - **Option 4**: Change additional settings as shown in green above.
-- **Option 5**: Saves your config to a settings.json file. Keep that file present in the same directory to use the same settings. Great for sharing in networks.
+- **Option 5**: Save configuration as 'settings.json' in current directory for sharing in network.
 
 
 ![Menu](media/speed1.png)
@@ -42,7 +42,3 @@ Error: self signed certificate in certificate chain
 ```
 
 This occurs becuase during the Internet Speed test chromium files are needed and downloaded from the Microsoft CDN. The requests of the proxy get intercepted with a custom untrusted certificate authority (CA) and it yields the above error. To remedy this add a copy of your custom root certificate (cert.pem) for your proxy server in the same directory as this executable. When you run the Internet Speed Test it will scan if a *.pem file is located in the same directory and give you the option to use before running the test.
-
-## Settings
-
-![Menu](media/speed2.png)
