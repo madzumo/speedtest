@@ -23,6 +23,7 @@ var (
 		"Set Iperf Server IP",
 		"Set Iperf Port number",
 		"Set Repeat Test Interval in Minutes",
+		"Set MSS Size",
 		"Toggle: Use CloudFront",
 		"Toggle: Use M-Labs",
 		"Toggle: Use Speedtest.net",
@@ -78,14 +79,14 @@ func menuSelection(menuSelect string, c *configSettings) {
 			if menuSelect == menuTOP[0] || menuSelect == menuTOP[2] {
 				loopcount := 0
 				for {
-					if complete, errorcode := runIperf(c.IperfS, false, c.IperfP, 0); !complete {
+					if complete, errorcode := runIperf(c.IperfS, false, c.IperfP, c.MSS); !complete {
 						if errorcode == 1 {
 							time.Sleep(10 * time.Second)
 						} else {
 							break
 						}
 					} else {
-						if complete, errorcode := runIperf(c.IperfS, true, c.IperfP, 0); !complete {
+						if complete, errorcode := runIperf(c.IperfS, true, c.IperfP, c.MSS); !complete {
 							if errorcode == 1 {
 								time.Sleep(10 * time.Second)
 							} else {
@@ -127,24 +128,27 @@ func menuSelection(menuSelect string, c *configSettings) {
 					c.Interval = getUserInputInt("Enter Repeat Test Interval in Minutes and hit 'enter'")
 					hp.ClearTerminalScreen()
 				case menuSettings[3]:
+					c.MSS = getUserInputInt("Enter desired MSS size and hit 'enter'")
+					hp.ClearTerminalScreen()
+				case menuSettings[4]:
 					if c.CloudFrontTest {
 						c.CloudFrontTest = false
 					} else {
 						c.CloudFrontTest = true
 					}
-				case menuSettings[4]:
+				case menuSettings[5]:
 					if c.MLabTest {
 						c.MLabTest = false
 					} else {
 						c.MLabTest = true
 					}
-				case menuSettings[5]:
+				case menuSettings[6]:
 					if c.NetTest {
 						c.NetTest = false
 					} else {
 						c.NetTest = true
 					}
-				case menuSettings[6]:
+				case menuSettings[7]:
 					if c.ShowBrowser {
 						c.ShowBrowser = false
 					} else {
@@ -169,7 +173,7 @@ func menuSelection(menuSelect string, c *configSettings) {
 }
 
 func showHeaderPlusConfig(config *configSettings) string {
-	var isps string
+	var isps, mssCustom string
 	if config.CloudFrontTest {
 		isps += "CF,"
 	}
@@ -179,9 +183,16 @@ func showHeaderPlusConfig(config *configSettings) string {
 	if config.NetTest {
 		isps += "NET"
 	}
+
+	if config.MSS == 0 {
+		mssCustom = "Auto"
+	} else {
+		mssCustom = strconv.Itoa(config.MSS)
+	}
+
 	header := hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-		hp.LipConfigStyle.Render(fmt.Sprintf("     Iperf:%s->%v  Tests:%s  Browser:%v  Repeat:%vmin\n\n",
-			config.IperfS, config.IperfP, isps, config.ShowBrowser, config.Interval))
+		hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s->%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin\n\n",
+			config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval))
 	return header
 }
 
