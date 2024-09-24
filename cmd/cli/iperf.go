@@ -7,7 +7,7 @@ import (
 
 	"github.com/BGrewell/go-iperf"
 	"github.com/madzumo/speedtest/internal/bubbles"
-	"github.com/madzumo/speedtest/internal/helpers"
+	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
 func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) (bool, int) {
@@ -18,15 +18,15 @@ func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmission
 		bubbleText = "Iperf test Upload..."
 	}
 	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, bubbleText, "46") // Run spinner in a goroutine
+	go bubbles.ShowSpinner(quit, bubbleText, "13") // Run spinner in a goroutine
 
-	if !helpers.IsPortOpen(serverIP, portNumber) {
+	if !hp.IsPortOpen(serverIP, portNumber) {
 		close(quit)
 		time.Sleep(2 * time.Second)
-		fmt.Println(lipErrorStyle.Render("Server unavailable. Iperf Server Client could be turned off."))
+		fmt.Println(hp.LipErrorStyle.Render("Server unavailable. Iperf Server Client could be turned off."))
 		return false, 0
 	}
-	direction := "🖥️Client->🐒Server (Upload)"
+	direction := "Iperf PC->Server (Upload)"
 	c := iperf.NewClient(serverIP)
 	c.SetJSON(true)
 	c.SetIncludeServer(false) //true
@@ -39,7 +39,7 @@ func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmission
 	if doDownloadTest {
 		c.SetReverse(true)
 		c.SetStreams(4) //
-		direction = "🐒Server->Client🖥️ (Download)"
+		direction = "Iperf Server->PC (Download)"
 	}
 	err := c.Start()
 	if err != nil {
@@ -70,8 +70,8 @@ func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmission
 					return false, 1
 				}
 				testResult := fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
-				fmt.Println(testResult)
-				writeLogFile(testResult)
+				fmt.Println(hp.LipOutputStyle.Render(testResult))
+				hp.WriteLogFile(fmt.Sprintf("🐒%s", testResult))
 			}
 		}
 	}

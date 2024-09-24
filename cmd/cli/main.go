@@ -7,10 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/madzumo/speedtest/internal/bubbles"
-	"github.com/madzumo/speedtest/internal/helpers"
-	"github.com/playwright-community/playwright-go"
+	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
 var (
@@ -30,13 +28,7 @@ var (
 		"Toggle: Use Speedtest.net",
 		"Toggle: Show Browser on Speed Tests",
 	}
-	configFileName    = "settings.json"
-	lipHeaderStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
-	lipConfigStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
-	lipOutputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
-	lipErrorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
-	lipSystemMsgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
-	lipResetStyle     = lipgloss.NewStyle()                                                                     // No styling
+	configFileName = "settings.json"
 )
 
 type configSettings struct {
@@ -51,7 +43,7 @@ type configSettings struct {
 }
 
 func main() {
-	helpers.SetPEMfiles()
+	hp.SetPEMfiles()
 	config, _ := getConfig()
 	for {
 		headerX := showHeaderPlusConfig(config)
@@ -67,7 +59,7 @@ func menuSelection(menuSelect string, c *configSettings) {
 	switch menuSelect {
 	case menuTOP[0], menuTOP[1], menuTOP[2]:
 		if c.CloudFrontTest || c.MLabTest {
-			if !installPlaywright() {
+			if !hp.InstallPlaywright() {
 				return
 			}
 		}
@@ -112,8 +104,8 @@ func menuSelection(menuSelect string, c *configSettings) {
 				break
 			}
 		}
-		helpers.PauseTerminalScreen()
-		helpers.ClearTerminalScreen()
+		hp.PauseTerminalScreen()
+		hp.ClearTerminalScreen()
 	case menuTOP[3]:
 		for {
 
@@ -122,13 +114,13 @@ func menuSelection(menuSelect string, c *configSettings) {
 				switch menuSelect {
 				case menuSettings[0]:
 					c.IperfS = getUserInputString("Enter Iperf Server IP and hit 'enter'")
-					helpers.ClearTerminalScreen()
+					hp.ClearTerminalScreen()
 				case menuSettings[1]:
 					c.IperfP = getUserInputInt("Enter Iperf Port Number  and hit 'enter'")
-					helpers.ClearTerminalScreen()
+					hp.ClearTerminalScreen()
 				case menuSettings[2]:
 					c.Interval = getUserInputInt("Enter Repeat Test Interval in Minutes and hit 'enter'")
-					helpers.ClearTerminalScreen()
+					hp.ClearTerminalScreen()
 				case menuSettings[3]:
 					if c.CloudFrontTest {
 						c.CloudFrontTest = false
@@ -162,24 +154,13 @@ func menuSelection(menuSelect string, c *configSettings) {
 	case menuTOP[4]:
 		err := saveConfig(c)
 		if err != nil {
-			fmt.Println(lipErrorStyle.Render(fmt.Sprintf("Error Saving Config. %s", err)))
+			fmt.Println(hp.LipErrorStyle.Render(fmt.Sprintf("Error Saving Config. %s", err)))
 		} else {
-			fmt.Println(lipSystemMsgStyle.Render("Config saved"))
+			fmt.Println(hp.LipSystemMsgStyle.Render("Config saved"))
 		}
-		helpers.PauseTerminalScreen()
-		helpers.ClearTerminalScreen()
+		hp.PauseTerminalScreen()
+		hp.ClearTerminalScreen()
 	}
-}
-
-func installPlaywright() (greatSuccess bool) {
-	greatSuccess = true
-	if err := playwright.Install(); err != nil {
-		fmt.Println(lipErrorStyle.Render(fmt.Sprintf("could not install Playwright: %v\n", err)))
-		helpers.PauseTerminalScreen()
-		greatSuccess = false
-	}
-	helpers.ClearTerminalScreen()
-	return greatSuccess
 }
 
 func showHeaderPlusConfig(config *configSettings) string {
@@ -193,8 +174,8 @@ func showHeaderPlusConfig(config *configSettings) string {
 	if config.NetTest {
 		isps += "NET"
 	}
-	header := lipHeaderStyle.Render(helpers.MenuHeader) + "\n" +
-		lipConfigStyle.Render(fmt.Sprintf("     Iperf:%s->%v  Tests:%s  Browser:%v  Repeat:%vmin\n\n",
+	header := hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
+		hp.LipConfigStyle.Render(fmt.Sprintf("     Iperf:%s->%v  Tests:%s  Browser:%v  Repeat:%vmin\n\n",
 			config.IperfS, config.IperfP, isps, config.ShowBrowser, config.Interval))
 	return header
 }
@@ -231,45 +212,19 @@ func saveConfig(config *configSettings) error {
 
 func getUserInputString(msg string) string {
 	var input string
-	fmt.Println(lipSystemMsgStyle.Render(msg))
+	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
 	fmt.Scanln(&input)
 	return input
 }
 
 func getUserInputInt(msg string) int {
 	var input string
-	fmt.Println(lipSystemMsgStyle.Render(msg))
+	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
 	fmt.Scanln(&input)
 	num, err := strconv.Atoi(input)
 	if err != nil {
-		fmt.Println(lipErrorStyle.Render("Entry must be a numeric number"))
+		fmt.Println(hp.LipErrorStyle.Render("Entry must be a numeric number"))
 		return 0
 	}
 	return num
-}
-
-func setLogFileName() string {
-	hostname, err := os.Hostname()
-	if err != nil {
-		fmt.Println("Error getting hostname of client:", err)
-	} else {
-		return fmt.Sprintf("iperf3_%s.txt", hostname)
-	}
-	return ""
-}
-
-func writeLogFile(logData string) {
-	logFileName := setLogFileName()
-	fileWriter, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("failed to create/open Log file: %v\n", err)
-	}
-	defer fileWriter.Close()
-
-	currentTime := time.Now().Format("2006-01-02 15:04:05")
-	if _, err := fmt.Fprintf(fileWriter, "[%s]%s\n", currentTime, logData); err != nil {
-		fmt.Printf("failed to write to Log file: %v\n", err)
-	}
-
-	// fmt.Printf("[%s]%s\n", currentTime, logData)
 }

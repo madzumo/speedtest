@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/playwright-community/playwright-go"
 )
 
 var (
@@ -24,8 +25,13 @@ var (
 ░▒▓███████▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░▒▓████████▓▒░▒▓███████▓▒░  
                                                                   
 `
-	lipStandardStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("117"))
-	lipResetStyle    = lipgloss.NewStyle() // No styling
+	LipStandardStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("117"))
+	LipHeaderStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
+	LipConfigStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
+	LipOutputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
+	LipErrorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
+	LipSystemMsgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
+	LipResetStyle     = lipgloss.NewStyle()
 )
 
 func GetLocalIP() string {
@@ -50,8 +56,8 @@ func ClearTerminalScreen() {
 }
 
 func PauseTerminalScreen() {
-	fmt.Println(lipResetStyle.Render("\n"))
-	fmt.Println(lipStandardStyle.Render("Press 'Enter' to continue...."))
+	fmt.Println(LipResetStyle.Render("\n"))
+	fmt.Println(LipStandardStyle.Render("Press 'Enter' to continue...."))
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 
@@ -90,5 +96,40 @@ func SetPEMfiles() {
 		}
 	} else {
 		// fmt.Println("No .pem files found.")
+	}
+}
+
+func InstallPlaywright() (greatSuccess bool) {
+	greatSuccess = true
+	if err := playwright.Install(); err != nil {
+		fmt.Println(LipErrorStyle.Render(fmt.Sprintf("could not install Playwright: %v\n", err)))
+		PauseTerminalScreen()
+		greatSuccess = false
+	}
+	ClearTerminalScreen()
+	return greatSuccess
+}
+
+func SetLogFileName() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error getting hostname of client:", err)
+	} else {
+		return fmt.Sprintf("iperf3_%s.txt", hostname)
+	}
+	return ""
+}
+
+func WriteLogFile(logData string) {
+	logFileName := SetLogFileName()
+	fileWriter, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("failed to create/open Log file: %v\n", err)
+	}
+	defer fileWriter.Close()
+
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	if _, err := fmt.Fprintf(fileWriter, "[%s]%s\n", currentTime, logData); err != nil {
+		fmt.Printf("failed to write to Log file: %v\n", err)
 	}
 }

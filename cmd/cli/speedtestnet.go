@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/madzumo/speedtest/internal/bubbles"
+	hp "github.com/madzumo/speedtest/internal/helpers"
 	"github.com/showwin/speedtest-go/speedtest"
 )
 
@@ -50,6 +51,6 @@ func netTest() {
 	}
 	close(quit)
 	time.Sleep(1 * time.Second)
-	fmt.Println(lipOutputStyle.Render(testResult))
-	writeLogFile(testResult)
+	fmt.Println(hp.LipOutputStyle.Render(testResult))
+	hp.WriteLogFile(fmt.Sprintf("⚡%s", testResult))
 }

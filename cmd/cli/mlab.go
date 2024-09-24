@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/madzumo/speedtest/internal/bubbles"
+	hp "github.com/madzumo/speedtest/internal/helpers"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -104,6 +105,6 @@ func mlTest(showBrowser bool) {
 	close(quit)
 	time.Sleep(1 * time.Second)
 	testResult := fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
-	fmt.Println(lipOutputStyle.Render(testResult))
-	writeLogFile(testResult)
+	fmt.Println(hp.LipOutputStyle.Render(testResult))
+	hp.WriteLogFile(fmt.Sprintf("🧪%s", testResult))
 }
