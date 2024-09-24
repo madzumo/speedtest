@@ -11,8 +11,7 @@ import (
 
 func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) bool {
 	if !helpers.IsPortOpen(serverIP, portNumber) {
-		cp := helpers.NewPromptColor()
-		cp.Error.Println("Server unavailable. Iperf Server Client could be turned off.")
+		fmt.Println(lipErrorStyle.Render("Server unavailable. Iperf Server Client could be turned off."))
 		return false
 	}
 	direction := "🖥️Client->🐒Server (Upload)"

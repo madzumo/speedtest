@@ -4,7 +4,7 @@
   "repeatInterval": 0,
   "MSS": 0,
   "CloudFrontTest": true,
-  "MLabTest": false,
-  "SpeedNetTest": true,
+  "MLabTest": true,
+  "SpeedNetTest": false,
   "showBrowser": false
 }

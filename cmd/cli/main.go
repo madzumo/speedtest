@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/madzumo/speedtest/internal/bubbles"
 	"github.com/madzumo/speedtest/internal/helpers"
 	"github.com/playwright-community/playwright-go"
@@ -30,7 +30,13 @@ var (
 		"Toggle: Use Speedtest.net",
 		"Toggle: Show Browser on Speed Tests",
 	}
-	configFileName = "settings.json"
+	configFileName    = "settings.json"
+	lipHeaderStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
+	lipConfigStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
+	lipOutputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
+	lipErrorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
+	lipSystemMsgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
+	lipResetStyle     = lipgloss.NewStyle()                                                                     // No styling
 )
 
 type configSettings struct {
@@ -45,11 +51,11 @@ type configSettings struct {
 }
 
 func main() {
-	setPEMfiles()
+	helpers.SetPEMfiles()
 	config, _ := getConfig()
 	for {
-		showHeaderPlusConfig(config)
-		if menuSelect := bubbles.ShowMenuList("MENU", false, menuTOP, "170"); menuSelect != "" {
+		headerX := showHeaderPlusConfig(config)
+		if menuSelect := bubbles.ShowMenuList("MENU", false, menuTOP, "170", headerX); menuSelect != "" {
 			menuSelection(menuSelect, config)
 		} else {
 			break
@@ -58,7 +64,6 @@ func main() {
 }
 
 func menuSelection(menuSelect string, c *configSettings) {
-	helpers.ClearTerminalScreen()
 	switch menuSelect {
 	case menuTOP[0], menuTOP[1], menuTOP[2]:
 		if c.CloudFrontTest || c.MLabTest {
@@ -94,16 +99,19 @@ func menuSelection(menuSelect string, c *configSettings) {
 		helpers.ClearTerminalScreen()
 	case menuTOP[3]:
 		for {
-			helpers.ClearTerminalScreen()
-			showHeaderPlusConfig(c)
-			if menuSelect := bubbles.ShowMenuList("CHANGE SETTINGS", true, menuSettings, "111"); menuSelect != "" {
+
+			headerX := showHeaderPlusConfig(c)
+			if menuSelect := bubbles.ShowMenuList("CHANGE SETTINGS", true, menuSettings, "111", headerX); menuSelect != "" {
 				switch menuSelect {
 				case menuSettings[0]:
 					c.IperfS = getUserInputString("Enter Iperf Server IP and hit 'enter'")
+					helpers.ClearTerminalScreen()
 				case menuSettings[1]:
 					c.IperfP = getUserInputInt("Enter Iperf Port Number  and hit 'enter'")
+					helpers.ClearTerminalScreen()
 				case menuSettings[2]:
 					c.Interval = getUserInputInt("Enter Repeat Test Interval in Minutes and hit 'enter'")
+					helpers.ClearTerminalScreen()
 				case menuSettings[3]:
 					if c.CloudFrontTest {
 						c.CloudFrontTest = false
@@ -133,16 +141,15 @@ func menuSelection(menuSelect string, c *configSettings) {
 				break
 			}
 		}
-		helpers.ClearTerminalScreen()
+
 	case menuTOP[4]:
-		// err := saveConfig(c)
-		// cp := helpers.NewPromptColor()
-		// if err != nil {
-		// 	cp.Error.Printf("Error Saving Config. %s\n", err)
-		// } else {
-		// 	cp.Notify2.Printf("Config saved\n")
-		// }
-		// helpers.PauseTerminalScreen()
+		err := saveConfig(c)
+		if err != nil {
+			fmt.Println(lipErrorStyle.Render(fmt.Sprintf("Error Saving Config. %s", err)))
+		} else {
+			fmt.Println(lipSystemMsgStyle.Render("Config saved"))
+		}
+		helpers.PauseTerminalScreen()
 		helpers.ClearTerminalScreen()
 	}
 }
@@ -150,9 +157,7 @@ func menuSelection(menuSelect string, c *configSettings) {
 func installPlaywright() (greatSuccess bool) {
 	greatSuccess = true
 	if err := playwright.Install(); err != nil {
-		// log.Fatalf("could not install Playwright: %v", err)
-		cp := helpers.NewPromptColor()
-		cp.Error.Printf("could not install Playwright: %v\n", err)
+		fmt.Println(lipErrorStyle.Render(fmt.Sprintf("could not install Playwright: %v\n", err)))
 		helpers.PauseTerminalScreen()
 		greatSuccess = false
 	}
@@ -160,8 +165,7 @@ func installPlaywright() (greatSuccess bool) {
 	return greatSuccess
 }
 
-func showHeaderPlusConfig(config *configSettings) {
-	helpers.ClearTerminalScreen()
+func showHeaderPlusConfig(config *configSettings) string {
 	var isps string
 	if config.CloudFrontTest {
 		isps += "CF,"
@@ -172,9 +176,10 @@ func showHeaderPlusConfig(config *configSettings) {
 	if config.NetTest {
 		isps += "NET"
 	}
-	cp := helpers.NewPromptColor()
-	cp.Notify1.Println(helpers.MenuHeader)
-	cp.Notify4.Printf("     Iperf:%s->%v  Tests:%s  Browser:%v  Repeat:%vmin\n", config.IperfS, config.IperfP, isps, config.ShowBrowser, config.Interval)
+	header := lipHeaderStyle.Render(helpers.MenuHeader) + "\n" +
+		lipConfigStyle.Render(fmt.Sprintf("     Iperf:%s->%v  Tests:%s  Browser:%v  Repeat:%vmin\n\n",
+			config.IperfS, config.IperfP, isps, config.ShowBrowser, config.Interval))
+	return header
 }
 
 func getConfig() (*configSettings, error) {
@@ -209,51 +214,21 @@ func saveConfig(config *configSettings) error {
 
 func getUserInputString(msg string) string {
 	var input string
-	cp := helpers.NewPromptColor()
-	cp.Normal.Printf("%s\n", msg)
+	fmt.Println(lipSystemMsgStyle.Render(msg))
 	fmt.Scanln(&input)
 	return input
 }
 
 func getUserInputInt(msg string) int {
 	var input string
-	cp := helpers.NewPromptColor()
-	cp.Normal.Printf("%s\n", msg)
+	fmt.Println(lipSystemMsgStyle.Render(msg))
 	fmt.Scanln(&input)
 	num, err := strconv.Atoi(input)
 	if err != nil {
-		cp.Error.Println("Entry must be a numeric number")
+		fmt.Println(lipErrorStyle.Render("Entry must be a numeric number"))
 		return 0
 	}
 	return num
-}
-
-func setPEMfiles() {
-	// Get the current working directory
-	dir, err := os.Getwd()
-	if err != nil {
-		fmt.Println("Error getting current directory:", err)
-		return
-	}
-
-	// Find .pem files in the directory
-	matches, err := filepath.Glob(filepath.Join(dir, "*.pem"))
-	if err != nil {
-		// fmt.Println("Error searching for .pem files:", err)
-		return
-	}
-
-	// If a .pem file was found, set the environment variable
-	if len(matches) > 0 {
-		err = os.Setenv("NODE_EXTRA_CA_CERTS", matches[0]) // Use the first .pem file found
-		if err != nil {
-			// fmt.Println("Error setting environment variable:", err)
-		} else {
-			// fmt.Println("Environment variable set:", os.Getenv("NODE_EXTRA_CA_CERTS"))
-		}
-	} else {
-		// fmt.Println("No .pem files found.")
-	}
 }
 
 func setLogFileName() string {

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/madzumo/speedtest/internal/bubbles"
-	"github.com/madzumo/speedtest/internal/helpers"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -107,9 +106,8 @@ func cfTest(showBrowser bool) (testResult string) {
 	}
 
 	close(quit) // This will send a quitMsg to your spinner model
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 	testResult = fmt.Sprintf("Cloudflare Test -> Down:%s, Up:%s", textDown, textUp)
-	cp := helpers.NewPromptColor()
-	cp.Normal.Println(testResult)
+	fmt.Println(lipOutputStyle.Render(testResult))
 	return testResult
 }

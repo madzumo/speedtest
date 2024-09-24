@@ -21,7 +21,7 @@ var (
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	// helpStyle2        = lipgloss.NewStyle().PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.Color("201"))
-	quitTextStyle = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+	// quitTextStyle = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 type item string
@@ -55,6 +55,7 @@ type MenuList struct {
 	list     list.Model
 	choice   string
 	quitting bool
+	header   string
 }
 
 func (m MenuList) Init() tea.Cmd {
@@ -95,10 +96,11 @@ func (m MenuList) View() string {
 	if m.quitting {
 
 	}
-	return "\n" + m.list.View()
+	return m.header + "\n" + m.list.View()
+	// return "\n" + m.list.View()
 }
 
-func ShowMenuList(menuTitle string, showtitle bool, menuItems []string, selectColor string) string {
+func ShowMenuList(menuTitle string, showtitle bool, menuItems []string, selectColor string, header string) string {
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(selectColor))
 	titleStyle = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(selectColor))
 	items := []list.Item{}
@@ -118,7 +120,7 @@ func ShowMenuList(menuTitle string, showtitle bool, menuItems []string, selectCo
 	l.Styles.HelpStyle = helpStyle
 	l.KeyMap.ShowFullHelp = key.NewBinding() //remove ? more
 
-	m := MenuList{list: l}
+	m := MenuList{list: l, header: header}
 	m.list.KeyMap.Quit = key.NewBinding(
 		key.WithKeys("esc", "ctrl+c"), //you can add q to escape here
 		key.WithHelp("esc", "quit"),

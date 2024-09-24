@@ -6,12 +6,14 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 )
 
-var MenuHeader = `
+var (
+	MenuHeader = `
                                                                   
  ░▒▓███████▓▒░▒▓███████▓▒░░▒▓████████▓▒░▒▓████████▓▒░▒▓███████▓▒░  
 ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░ 
@@ -22,37 +24,9 @@ var MenuHeader = `
 ░▒▓███████▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░▒▓████████▓▒░▒▓███████▓▒░  
                                                                   
 `
-
-// Holds different color configuration to colorize Terminal Prompts
-type PromptColor struct {
-	//WHITE on -> BLUE
-	Normal *color.Color
-	//WHITE on -> RED + Bold
-	Error *color.Color
-	//MAGENTA + Bold
-	Notify1 *color.Color
-	//BLUE + Bold
-	Notify2 *color.Color
-	//RED + Bold
-	Notify3 *color.Color
-	//GREEN + Bold
-	Notify4 *color.Color
-	//BLACK on -> Yellow + Bold
-	Special *color.Color
-}
-
-// Initialize Prompt Color
-func NewPromptColor() *PromptColor {
-	return &PromptColor{
-		Normal:  color.New(color.BgBlue).Add(color.FgWhite),
-		Error:   color.New(color.BgRed).Add(color.FgWhite).Add(color.Bold),
-		Notify1: color.New(color.FgMagenta).Add(color.Bold),
-		Notify2: color.New(color.FgBlue).Add(color.Bold),
-		Special: color.New(color.BgYellow).Add(color.FgBlack).Add(color.Bold),
-		Notify3: color.New(color.FgRed).Add(color.Bold),
-		Notify4: color.New(color.FgHiGreen).Add(color.Bold),
-	}
-}
+	lipStandardStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("117"))
+	lipResetStyle    = lipgloss.NewStyle() // No styling
+)
 
 func GetLocalIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
@@ -68,7 +42,7 @@ func GetLocalIP() string {
 
 func ClearTerminalScreen() {
 	// fmt.Println("Going to clear")
-	// fmt.Print("\033[H\033[2J")
+	fmt.Print("\033[H\033[2J")
 	// fmt.Println("Have cleared")
 	// cmd := exec.Command("clear") // works on Linux/macOS
 	// cmd.Stdout = os.Stdout
@@ -76,8 +50,8 @@ func ClearTerminalScreen() {
 }
 
 func PauseTerminalScreen() {
-	pc := NewPromptColor()
-	pc.Notify2.Printf("\nPress 'Enter' to continue....")
+	fmt.Println(lipResetStyle.Render("\n"))
+	fmt.Println(lipStandardStyle.Render("Press 'Enter' to continue...."))
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 
@@ -91,12 +65,30 @@ func IsPortOpen(serverIP string, port int) bool {
 	return true
 }
 
-func ScanCACerts() (foundCert bool) {
+func SetPEMfiles() {
+	// Get the current working directory
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error getting current directory:", err)
+		return
+	}
 
-	return false
-}
+	// Find .pem files in the directory
+	matches, err := filepath.Glob(filepath.Join(dir, "*.pem"))
+	if err != nil {
+		// fmt.Println("Error searching for .pem files:", err)
+		return
+	}
 
-func UseCACerts() bool {
-
-	return false
+	// If a .pem file was found, set the environment variable
+	if len(matches) > 0 {
+		err = os.Setenv("NODE_EXTRA_CA_CERTS", matches[0]) // Use the first .pem file found
+		if err != nil {
+			// fmt.Println("Error setting environment variable:", err)
+		} else {
+			// fmt.Println("Environment variable set:", os.Getenv("NODE_EXTRA_CA_CERTS"))
+		}
+	} else {
+		// fmt.Println("No .pem files found.")
+	}
 }

@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/madzumo/speedtest/internal/bubbles"
-	"github.com/madzumo/speedtest/internal/helpers"
 	"github.com/playwright-community/playwright-go"
 )
 
 func mlTest(showBrowser bool) (testResult string) {
 	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "183") // Run spinner in a goroutine
+	go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "57") // Run spinner in a goroutine
 
 	// Start Playwright
 	pw, err := playwright.Run()
@@ -105,7 +104,6 @@ func mlTest(showBrowser bool) (testResult string) {
 	close(quit)
 	time.Sleep(1 * time.Second)
 	testResult = fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
-	cp := helpers.NewPromptColor()
-	cp.Normal.Println(testResult)
+	fmt.Println(lipOutputStyle.Render(testResult))
 	return testResult
 }

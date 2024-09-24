@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.1.1
 	github.com/charmbracelet/lipgloss v0.13.0
-	github.com/fatih/color v1.17.0
 	github.com/playwright-community/playwright-go v0.4701.0
 	github.com/showwin/speedtest-go v1.7.9
 )
@@ -27,7 +26,6 @@ require (
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
