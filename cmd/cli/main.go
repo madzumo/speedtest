@@ -33,27 +33,35 @@ var (
 )
 
 type configSettings struct {
-	IperfS         string `json:"iperfServer"`
-	IperfP         int    `json:"iperfPort"`
-	Interval       int    `json:"repeatInterval"`
-	MSS            int    `json:"MSS"`
-	CloudFrontTest bool   `json:"CloudFrontTest"`
-	MLabTest       bool   `json:"MLabTest"`
-	NetTest        bool   `json:"SpeedNetTest"`
-	ShowBrowser    bool   `json:"showBrowser"`
+	IperfS         string      `json:"iperfServer"`
+	IperfP         int         `json:"iperfPort"`
+	Interval       int         `json:"repeatInterval"`
+	MSS            int         `json:"MSS"`
+	CloudFrontTest bool        `json:"CloudFrontTest"`
+	MLabTest       bool        `json:"MLabTest"`
+	NetTest        bool        `json:"SpeedNetTest"`
+	ShowBrowser    bool        `json:"showBrowser"`
+	EmailSettings  hp.EmailJob `json:"emailSettings"`
 }
 
 func main() {
-	hp.SetPEMfiles()
+	// hp.SetPEMfiles()
 	config, _ := getConfig()
-	for {
-		headerX := showHeaderPlusConfig(config)
-		if menuSelect := bubbles.ShowMenuList("MENU", false, menuTOP, "170", headerX); menuSelect != "" {
-			menuSelection(menuSelect, config)
-		} else {
-			break
-		}
-	}
+	// for {
+	headerX, headerIP := showHeaderPlusConfigPlusIP(config)
+	// 	if menuSelect := bubbles.ShowMenuList("MENU", false, menuTOP, "170", headerX, headerIP); menuSelect != "" {
+	// 		menuSelection(menuSelect, config)
+	// 	} else {
+	// 		break
+	// 	}
+	// }
+	// header := "Your Application Header"
+	// headerIP := "192.168.1.1" // Example IP
+	selectColor := "205" // Example color code
+	menuTitle := "Main Menu"
+	showTitle := false
+
+	bubbles.ShowMenuList(menuTitle, showTitle, selectColor, headerX, headerIP)
 }
 
 func menuSelection(menuSelect string, c *configSettings) {
@@ -117,49 +125,49 @@ func menuSelection(menuSelect string, c *configSettings) {
 	case menuTOP[3]:
 		for {
 
-			headerX := showHeaderPlusConfig(c)
-			if menuSelect := bubbles.ShowMenuList("CHANGE SETTINGS", true, menuSettings, "111", headerX); menuSelect != "" {
-				switch menuSelect {
-				case menuSettings[0]:
-					c.IperfS = getUserInputString("Enter Iperf Server IP and hit 'enter'")
-					hp.ClearTerminalScreen()
-				case menuSettings[1]:
-					c.IperfP = getUserInputInt("Enter Iperf Port Number  and hit 'enter'")
-					hp.ClearTerminalScreen()
-				case menuSettings[2]:
-					c.Interval = getUserInputInt("Enter Repeat Test Interval in Minutes and hit 'enter'")
-					hp.ClearTerminalScreen()
-				case menuSettings[3]:
-					c.MSS = getUserInputInt("Enter desired MSS size and hit 'enter'")
-					hp.ClearTerminalScreen()
-				case menuSettings[4]:
-					if c.CloudFrontTest {
-						c.CloudFrontTest = false
-					} else {
-						c.CloudFrontTest = true
-					}
-				case menuSettings[5]:
-					if c.MLabTest {
-						c.MLabTest = false
-					} else {
-						c.MLabTest = true
-					}
-				case menuSettings[6]:
-					if c.NetTest {
-						c.NetTest = false
-					} else {
-						c.NetTest = true
-					}
-				case menuSettings[7]:
-					if c.ShowBrowser {
-						c.ShowBrowser = false
-					} else {
-						c.ShowBrowser = true
-					}
-				}
-			} else {
-				break
-			}
+			// headerX, headerIP := showHeaderPlusConfigPlusIP(c)
+			// if menuSelect := bubbles.ShowMenuList("CHANGE SETTINGS", true, menuSettings, "111", headerX, headerIP); menuSelect != "" {
+			// 	switch menuSelect {
+			// 	case menuSettings[0]:
+			// 		c.IperfS = getUserInputString("Enter Iperf Server IP and hit 'enter'")
+			// 		hp.ClearTerminalScreen()
+			// 	case menuSettings[1]:
+			// 		c.IperfP = getUserInputInt("Enter Iperf Port Number  and hit 'enter'")
+			// 		hp.ClearTerminalScreen()
+			// 	case menuSettings[2]:
+			// 		c.Interval = getUserInputInt("Enter Repeat Test Interval in Minutes and hit 'enter'")
+			// 		hp.ClearTerminalScreen()
+			// 	case menuSettings[3]:
+			// 		c.MSS = getUserInputInt("Enter desired MSS size and hit 'enter'")
+			// 		hp.ClearTerminalScreen()
+			// 	case menuSettings[4]:
+			// 		if c.CloudFrontTest {
+			// 			c.CloudFrontTest = false
+			// 		} else {
+			// 			c.CloudFrontTest = true
+			// 		}
+			// 	case menuSettings[5]:
+			// 		if c.MLabTest {
+			// 			c.MLabTest = false
+			// 		} else {
+			// 			c.MLabTest = true
+			// 		}
+			// 	case menuSettings[6]:
+			// 		if c.NetTest {
+			// 			c.NetTest = false
+			// 		} else {
+			// 			c.NetTest = true
+			// 		}
+			// 	case menuSettings[7]:
+			// 		if c.ShowBrowser {
+			// 			c.ShowBrowser = false
+			// 		} else {
+			// 			c.ShowBrowser = true
+			// 		}
+			// 	}
+			// } else {
+			// 	break
+			// }
 		}
 
 	case menuTOP[4]:
@@ -174,7 +182,7 @@ func menuSelection(menuSelect string, c *configSettings) {
 	}
 }
 
-func showHeaderPlusConfig(config *configSettings) string {
+func showHeaderPlusConfigPlusIP(config *configSettings) (string, string) {
 	var isps, mssCustom string
 	if config.CloudFrontTest {
 		isps += "CF,"
@@ -192,11 +200,14 @@ func showHeaderPlusConfig(config *configSettings) string {
 		mssCustom = strconv.Itoa(config.MSS)
 	}
 
+	myIP := hp.GetLocalIP()
 	header := hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
 		hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s->%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
 			config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
-		hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", hp.GetLocalIP()))
-	return header
+		hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
+
+	header2 := myIP
+	return header, header2
 }
 
 func getConfig() (*configSettings, error) {
@@ -209,6 +220,16 @@ func getConfig() (*configSettings, error) {
 		MLabTest:       true,
 		NetTest:        true,
 		ShowBrowser:    false,
+		EmailSettings: hp.EmailJob{
+			From:     "sender@domain.com",
+			To:       "recipient@domain.com",
+			Subject:  "Test",
+			Body:     "Test",
+			SMTPHost: "smtp.domain.com",
+			SMTPPort: "587",
+			UserName: "user",
+			PassWord: "password",
+		},
 	}
 
 	data, err := os.ReadFile(configFileName)

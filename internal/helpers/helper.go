@@ -35,6 +35,28 @@ var (
 	LipResetStyle     = lipgloss.NewStyle()
 )
 
+type EmailJob struct {
+	From     string `json:"from"`
+	To       string `json:"to"`
+	Subject  string `json:"subject"`
+	Body     string `json:"body"`
+	SMTPHost string `json:"smtpHost"`
+	SMTPPort string `json:"smtpPort"`
+	UserName string `json:"userName"`
+	PassWord string `json:"passWord"`
+}
+
+func (e *EmailJob) SendEmail() bool {
+	// auth := smtp.PlainAuth("", e.UserName, e.PassWord, e.SmtpHost)
+	return true
+}
+
+func NewemailJob() *EmailJob {
+	return &EmailJob{
+		To: "",
+	}
+}
+
 func GetLocalIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
