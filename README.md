@@ -44,4 +44,4 @@ Error: unable to get local issuer certificate
 code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
 ```
 
-This occurs becuase during the Internet Speed test chromium files are needed and downloaded from the Microsoft CDN. This is a one time download but is needed for 2 of the Internet speed tests. The requests get intercepted with a custom untrusted certificate authority (CA) and it yields the above error. To fix this add a copy of your custom root certificate (cert.pem) for your proxy server in the same directory as this executable. This utility will automatically use it.
+This occurs becuase during the Internet Speed test chromium files are needed and downloaded from the Microsoft CDN. This is a one time download but is needed for 2 of the Internet speed tests. The requests get intercepted with a custom untrusted certificate authority (CA) and it yields the above error. To fix this add a copy of your custom root certificate (cert.pem) for your proxy server in the same directory as this executable.
