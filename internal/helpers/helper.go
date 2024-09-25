@@ -31,6 +31,7 @@ var (
 	LipOutputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
 	LipErrorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
 	LipSystemMsgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
+	LipFooterStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	LipResetStyle     = lipgloss.NewStyle()
 )
 

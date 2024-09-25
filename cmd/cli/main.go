@@ -193,8 +193,9 @@ func showHeaderPlusConfig(config *configSettings) string {
 	}
 
 	header := hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-		hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s->%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin\n\n",
-			config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval))
+		hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s->%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
+			config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
+		hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", hp.GetLocalIP()))
 	return header
 }
 
