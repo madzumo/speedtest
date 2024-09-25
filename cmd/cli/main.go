@@ -105,7 +105,8 @@ func menuSelection(menuSelect string, c *configSettings) {
 			}
 
 			if c.Interval > 0 {
-				fmt.Println(hp.LipSystemMsgStyle.Render(fmt.Sprintf("\nRepeat Interval in %dmin", c.Interval)))
+				fmt.Print("\n")
+				fmt.Println(hp.LipSystemMsgStyle.Render(fmt.Sprintf("Repeat Interval in %dmin", c.Interval)))
 				time.Sleep(time.Duration(c.Interval) * time.Minute)
 			} else {
 				break
