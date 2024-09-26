@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
 const listHeight = 14
@@ -23,6 +24,9 @@ var (
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	menuMainColor     = "205"
+	menuSettingsColor = "111"
+	menuSMTPcolor     = "184"
 )
 
 var menuTOP = []string{
@@ -38,11 +42,11 @@ var menuSettings = []string{
 	"Set Iperf Port number",
 	"Set Repeat Test Interval in Minutes",
 	"Set MSS Size",
+	"Configure SMTP Settings",
 	"Toggle: Use CloudFlare",
 	"Toggle: Use M-Labs",
 	"Toggle: Use Speedtest.net",
 	"Toggle: Show Browser on Speed Tests",
-	"Back to Main Menu",
 }
 
 var menuSMTP = []string{
@@ -52,7 +56,6 @@ var menuSMTP = []string{
 	"Set SMTP Password",
 	"Set E-Mail Subject",
 	"Set E-Mail Message",
-	"Back to Settings Menu",
 }
 
 type MenuState int
@@ -62,6 +65,7 @@ const (
 	StateSettingsMenu
 	StateSpinner
 	StateResultDisplay
+	StateSMTPMenu
 	StateTextInput
 )
 
@@ -110,6 +114,8 @@ func (m MenuList) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateSpinner(msg)
 	case StateResultDisplay:
 		return m.updateViewResultDisplay(msg)
+	case StateSMTPMenu:
+		return m.updateSMTPMenu(msg)
 	default:
 		return m, nil
 	}
@@ -141,6 +147,9 @@ func (m *MenuList) updateMainMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
 				case "Change Settings":
 					m.prevState = m.state
+					m.list.Title = "Main Menu->Settings"
+					selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuSettingsColor))
+					m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuSettingsColor))
 					m.state = StateSettingsMenu
 					m.updateListItems()
 					return m, nil
@@ -166,6 +175,9 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "esc", "ctrl+c":
+			m.list.Title = "Main Menu"
+			selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuMainColor))
+			m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuMainColor))
 			m.state = StateMainMenu
 			m.updateListItems()
 			return m, nil
@@ -175,7 +187,17 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				choice := string(i)
 				switch choice {
 				case "Back to Main Menu":
+					m.list.Title = "Main Menu"
+					selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuMainColor))
+					m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuMainColor))
 					m.state = StateMainMenu
+					m.updateListItems()
+					return m, nil
+				case "Configure SMTP Settings":
+					m.list.Title = "Main Menu->Settings->SMTP"
+					selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuSMTPcolor))
+					m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuSMTPcolor))
+					m.state = StateSMTPMenu
 					m.updateListItems()
 					return m, nil
 				default:
@@ -211,9 +233,6 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.backgroundJobResult = msg.result
 		m.state = StateResultDisplay
 		return m, nil
-		// } else {
-		// 	return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
-		// }
 	case continueJobs:
 		return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
 	default:
@@ -238,11 +257,50 @@ func (m *MenuList) updateViewResultDisplay(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch keypress := msg.String(); keypress {
+		case "esc", "ctrl+c":
+			m.list.Title = "Main Menu->Settings"
+			selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuSettingsColor))
+			m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuSettingsColor))
+			m.state = StateSettingsMenu
+			m.updateListItems()
+			return m, nil
+		case "enter":
+			i, ok := m.list.SelectedItem().(item)
+			if ok {
+				choice := string(i)
+				switch choice {
+				case "Back to Main Menu":
+					m.list.Title = "Main Menu"
+					selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuMainColor))
+					m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuMainColor))
+					m.state = StateMainMenu
+					m.updateListItems()
+					return m, nil
+				default:
+					// Simulate settings change
+					m.prevState = m.state
+					m.state = StateResultDisplay
+					m.backgroundJobResult = fmt.Sprintf("%s updated successfully.", choice)
+					return m, nil
+				}
+			}
+			return m, nil
+		}
+	}
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
 func (m *MenuList) startBackgroundJob() tea.Cmd {
 	return func() tea.Msg {
-		if len(m.jobList) == 0 {
-			return backgroundJobMsg{result: "All jobs completed successfully!"}
-		}
+		// if len(m.jobList) == 0 {
+		// 	return backgroundJobMsg{result: "All jobs completed successfully!"}
+		// }
 
 		// Grab the first job in the list
 		for i := range m.jobList {
@@ -258,13 +316,16 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 				time.Sleep(3 * time.Second)
 			case "Iperf":
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("200"))
-				m.spinnerMsg = "Running Iperf Speed test"
+				m.spinnerMsg = "Running Iperf test"
 				time.Sleep(3 * time.Second)
+			case "SaveSettings":
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("219"))
+				m.spinnerMsg = "Saving Settings"
+				time.Sleep(2 * time.Second)
 			}
 
-			// Remove the job after running
-			delete(m.jobList, i)
-			break // Exit the loop after the first job is run
+			delete(m.jobList, i) // Remove the job after running
+			break                // Exit the loop after the first job is run
 		}
 
 		// Continue running the next job if there are any left
@@ -278,10 +339,10 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 
 func (m MenuList) View() string {
 	switch m.state {
-	case StateMainMenu, StateSettingsMenu:
+	case StateMainMenu, StateSettingsMenu, StateSMTPMenu:
 		return m.header + "\n" + m.list.View()
 	case StateSpinner:
-		return fmt.Sprintf("\n\n   %s %s\n\n%v\nLength:%v", m.spinner.View(), m.spinnerMsg, m.jobList, len(m.jobList))
+		return fmt.Sprintf("\n\n   %s %s\n\n", m.spinner.View(), m.spinnerMsg)
 	case StateResultDisplay:
 		return m.viewResultDisplay()
 	default:
@@ -290,7 +351,8 @@ func (m MenuList) View() string {
 }
 
 func (m MenuList) viewResultDisplay() string {
-	return fmt.Sprintf("\n\n%s\n\nPress 'esc' to return.", m.backgroundJobResult)
+	outro := hp.LipStandardStyle.Render("Press 'esc' to return.")
+	return fmt.Sprintf("\n\n%s\n\n%s", m.backgroundJobResult, outro)
 }
 
 func (m *MenuList) updateListItems() {
@@ -307,7 +369,14 @@ func (m *MenuList) updateListItems() {
 			items = append(items, item(value))
 		}
 		m.list.SetItems(items)
+	case StateSMTPMenu:
+		items := []list.Item{}
+		for _, value := range menuSMTP {
+			items = append(items, item(value))
+		}
+		m.list.SetItems(items)
 	}
+
 	m.list.ResetSelected()
 }
 
@@ -323,28 +392,23 @@ func BuildJobList(m *MenuList) {
 		m.jobList = map[int]string{
 			0: "CloudFlare",
 			1: "MLab",
-			2: "Iperf",
 		}
 	case "Run Iperf Test Only":
 		m.jobList = map[int]string{
-			0: "CloudFlare",
-			1: "MLab",
 			2: "Iperf",
 		}
 	case "Save Settings":
 		m.jobList = map[int]string{
-			0: "CloudFlare",
-			1: "MLab",
-			2: "Iperf",
+			3: "SaveSettings",
 		}
 	}
 }
 
-func ShowMenuList(selectColor string, header string, headerIP string) {
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(selectColor))
-	titleStyle = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(selectColor))
+func ShowMenuList(header string, headerIP string) {
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuMainColor))
+	titleStyle = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuMainColor))
 
-	const defaultWidth = 20
+	const defaultWidth = 90
 
 	// Initialize the list with empty items; items will be set in updateListItems
 	l := list.New([]list.Item{}, itemDelegate{}, defaultWidth, listHeight)
@@ -357,19 +421,16 @@ func ShowMenuList(selectColor string, header string, headerIP string) {
 	l.Styles.HelpStyle = helpStyle
 	l.KeyMap.ShowFullHelp = key.NewBinding() // remove '?' help option
 
-	// Initialize the spinner
 	s := spinner.New()
 	s.Spinner = spinner.Pulse
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color(selectColor))
 
 	m := MenuList{
-		list:        l,
-		header:      header,
-		headerIP:    headerIP,
-		state:       StateMainMenu,
-		spinner:     s,
-		selectColor: selectColor,
-		spinnerMsg:  "Perro sucio",
+		list:       l,
+		header:     header,
+		headerIP:   headerIP,
+		state:      StateMainMenu,
+		spinner:    s,
+		spinnerMsg: "Perro sucio",
 	}
 
 	m.updateListItems()

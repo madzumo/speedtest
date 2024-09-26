@@ -5,29 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
 var (
-	// menuTOP = []string{
-	// 	"Run ALL Tests",
-	// 	"Run Internet Speed Tests Only",
-	// 	"Run Iperf Test Only",
-	// 	"Change Settings",
-	// 	"Save Settings",
-	// }
-	// menuSettings = []string{
-	// 	"Set Iperf Server IP",
-	// 	"Set Iperf Port number",
-	// 	"Set Repeat Test Interval in Minutes",
-	// 	"Set MSS Size",
-	// 	"Toggle: Use CloudFront",
-	// 	"Toggle: Use M-Labs",
-	// 	"Toggle: Use Speedtest.net",
-	// 	"Toggle: Show Browser on Speed Tests",
-	// }
 	configFileName = "settings.json"
 )
 
@@ -44,131 +26,11 @@ type configSettings struct {
 }
 
 func main() {
-	// hp.SetPEMfiles()
+	hp.SetPEMfiles()
 	config, _ := getConfig()
 	headerX, headerIP := showHeaderPlusConfigPlusIP(config)
-	selectColor := "205" // Example color code
 
-	ShowMenuList(selectColor, headerX, headerIP)
-	// ShowMenuList()
-}
-
-func menuSelection(menuSelect string, c *configSettings) {
-	switch menuSelect {
-	case menuTOP[0], menuTOP[1], menuTOP[2]:
-		if c.CloudFrontTest || c.MLabTest {
-			if !hp.InstallPlaywright() {
-				return
-			}
-		}
-		for {
-			if menuSelect == menuTOP[0] || menuSelect == menuTOP[1] {
-				if c.CloudFrontTest {
-					cfTest(c.ShowBrowser)
-				}
-				if c.MLabTest {
-					mlTest(c.ShowBrowser)
-				}
-				if c.NetTest {
-					netTest()
-				}
-			}
-			if menuSelect == menuTOP[0] || menuSelect == menuTOP[2] {
-				loopcount := 0
-				for {
-					if complete, errorcode := runIperf(c.IperfS, false, c.IperfP, c.MSS); !complete {
-						if errorcode == 1 {
-							time.Sleep(10 * time.Second)
-						} else {
-							break
-						}
-					} else {
-						if complete, errorcode := runIperf(c.IperfS, true, c.IperfP, c.MSS); !complete {
-							if errorcode == 1 {
-								time.Sleep(10 * time.Second)
-							} else {
-								break
-							}
-						} else {
-							break
-						}
-					}
-					loopcount += 1
-					if loopcount >= 4 {
-						fmt.Println(hp.LipErrorStyle.Render("To many retries. Iperf test will exit."))
-						break
-					}
-				}
-			}
-
-			if c.Interval > 0 {
-				fmt.Print("\n")
-				fmt.Println(hp.LipSystemMsgStyle.Render(fmt.Sprintf("Repeat Interval in %dmin", c.Interval)))
-				time.Sleep(time.Duration(c.Interval) * time.Minute)
-			} else {
-				break
-			}
-		}
-		hp.PauseTerminalScreen()
-		hp.ClearTerminalScreen()
-	case menuTOP[3]:
-		for {
-
-			// headerX, headerIP := showHeaderPlusConfigPlusIP(c)
-			// if menuSelect := bubbles.ShowMenuList("CHANGE SETTINGS", true, menuSettings, "111", headerX, headerIP); menuSelect != "" {
-			// 	switch menuSelect {
-			// 	case menuSettings[0]:
-			// 		c.IperfS = getUserInputString("Enter Iperf Server IP and hit 'enter'")
-			// 		hp.ClearTerminalScreen()
-			// 	case menuSettings[1]:
-			// 		c.IperfP = getUserInputInt("Enter Iperf Port Number  and hit 'enter'")
-			// 		hp.ClearTerminalScreen()
-			// 	case menuSettings[2]:
-			// 		c.Interval = getUserInputInt("Enter Repeat Test Interval in Minutes and hit 'enter'")
-			// 		hp.ClearTerminalScreen()
-			// 	case menuSettings[3]:
-			// 		c.MSS = getUserInputInt("Enter desired MSS size and hit 'enter'")
-			// 		hp.ClearTerminalScreen()
-			// 	case menuSettings[4]:
-			// 		if c.CloudFrontTest {
-			// 			c.CloudFrontTest = false
-			// 		} else {
-			// 			c.CloudFrontTest = true
-			// 		}
-			// 	case menuSettings[5]:
-			// 		if c.MLabTest {
-			// 			c.MLabTest = false
-			// 		} else {
-			// 			c.MLabTest = true
-			// 		}
-			// 	case menuSettings[6]:
-			// 		if c.NetTest {
-			// 			c.NetTest = false
-			// 		} else {
-			// 			c.NetTest = true
-			// 		}
-			// 	case menuSettings[7]:
-			// 		if c.ShowBrowser {
-			// 			c.ShowBrowser = false
-			// 		} else {
-			// 			c.ShowBrowser = true
-			// 		}
-			// 	}
-			// } else {
-			// 	break
-			// }
-		}
-
-	case menuTOP[4]:
-		err := saveConfig(c)
-		if err != nil {
-			fmt.Println(hp.LipErrorStyle.Render(fmt.Sprintf("Error Saving Config. %s", err)))
-		} else {
-			fmt.Println(hp.LipSystemMsgStyle.Render("Config saved"))
-		}
-		hp.PauseTerminalScreen()
-		hp.ClearTerminalScreen()
-	}
+	ShowMenuList(headerX, headerIP)
 }
 
 func showHeaderPlusConfigPlusIP(config *configSettings) (string, string) {

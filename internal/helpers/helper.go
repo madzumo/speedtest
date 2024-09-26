@@ -25,7 +25,7 @@ var (
 ░▒▓███████▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░▒▓████████▓▒░▒▓███████▓▒░  
                                                                   
 `
-	LipStandardStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("117"))
+	LipStandardStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
 	LipHeaderStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
 	LipConfigStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
 	LipOutputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
