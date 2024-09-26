@@ -5,14 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/madzumo/speedtest/internal/bubbles"
 	hp "github.com/madzumo/speedtest/internal/helpers"
 	"github.com/playwright-community/playwright-go"
 )
 
 func mlTest(showBrowser bool) {
-	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "57") // Run spinner in a goroutine
+	// quit := make(chan struct{})
+	// go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "57") // Run spinner in a goroutine
 
 	// Start Playwright
 	pw, err := playwright.Run()
@@ -102,8 +101,8 @@ func mlTest(showBrowser bool) {
 	if err := pw.Stop(); err != nil {
 		log.Fatalf("could not stop Playwright: %v", err)
 	}
-	close(quit)
-	time.Sleep(1 * time.Second)
+	// close(quit)
+	// time.Sleep(1 * time.Second)
 	testResult := fmt.Sprintf("M-Labs Test-> Down:%s, Up:%s", textDown, textUp)
 	fmt.Println(hp.LipOutputStyle.Render(testResult))
 	hp.WriteLogFile(fmt.Sprintf("🧪%s", testResult))

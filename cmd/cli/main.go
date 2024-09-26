@@ -7,28 +7,27 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/madzumo/speedtest/internal/bubbles"
 	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
 var (
-	menuTOP = []string{
-		"Run ALL Tests",
-		"Run Internet Speed Tests Only",
-		"Run Iperf Test Only",
-		"Change Settings",
-		"Save Settings",
-	}
-	menuSettings = []string{
-		"Set Iperf Server IP",
-		"Set Iperf Port number",
-		"Set Repeat Test Interval in Minutes",
-		"Set MSS Size",
-		"Toggle: Use CloudFront",
-		"Toggle: Use M-Labs",
-		"Toggle: Use Speedtest.net",
-		"Toggle: Show Browser on Speed Tests",
-	}
+	// menuTOP = []string{
+	// 	"Run ALL Tests",
+	// 	"Run Internet Speed Tests Only",
+	// 	"Run Iperf Test Only",
+	// 	"Change Settings",
+	// 	"Save Settings",
+	// }
+	// menuSettings = []string{
+	// 	"Set Iperf Server IP",
+	// 	"Set Iperf Port number",
+	// 	"Set Repeat Test Interval in Minutes",
+	// 	"Set MSS Size",
+	// 	"Toggle: Use CloudFront",
+	// 	"Toggle: Use M-Labs",
+	// 	"Toggle: Use Speedtest.net",
+	// 	"Toggle: Show Browser on Speed Tests",
+	// }
 	configFileName = "settings.json"
 )
 
@@ -47,21 +46,11 @@ type configSettings struct {
 func main() {
 	// hp.SetPEMfiles()
 	config, _ := getConfig()
-	// for {
 	headerX, headerIP := showHeaderPlusConfigPlusIP(config)
-	// 	if menuSelect := bubbles.ShowMenuList("MENU", false, menuTOP, "170", headerX, headerIP); menuSelect != "" {
-	// 		menuSelection(menuSelect, config)
-	// 	} else {
-	// 		break
-	// 	}
-	// }
-	// header := "Your Application Header"
-	// headerIP := "192.168.1.1" // Example IP
 	selectColor := "205" // Example color code
-	menuTitle := "Main Menu"
-	showTitle := false
 
-	bubbles.ShowMenuList(menuTitle, showTitle, selectColor, headerX, headerIP)
+	ShowMenuList(selectColor, headerX, headerIP)
+	// ShowMenuList()
 }
 
 func menuSelection(menuSelect string, c *configSettings) {

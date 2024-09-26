@@ -1,4 +1,4 @@
-package bubbles
+package main
 
 import (
 	"fmt"
@@ -38,38 +38,21 @@ var menuSettings = []string{
 	"Set Iperf Port number",
 	"Set Repeat Test Interval in Minutes",
 	"Set MSS Size",
-	"Toggle: Use CloudFront",
+	"Toggle: Use CloudFlare",
 	"Toggle: Use M-Labs",
 	"Toggle: Use Speedtest.net",
 	"Toggle: Show Browser on Speed Tests",
 	"Back to Main Menu",
 }
 
-type item string
-
-func (i item) FilterValue() string { return "" }
-
-type itemDelegate struct{}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
+var menuSMTP = []string{
+	"Set SMTP Server",
+	"Set SMTP Port",
+	"Set SMTP Username",
+	"Set SMTP Password",
+	"Set E-Mail Subject",
+	"Set E-Mail Message",
+	"Back to Settings Menu",
 }
 
 type MenuState int
@@ -79,11 +62,24 @@ const (
 	StateSettingsMenu
 	StateSpinner
 	StateResultDisplay
+	StateTextInput
+)
+
+type backgroundJobTypes int
+
+const (
+	JobCloudFlareTest backgroundJobTypes = iota
+	JobMLabTest
+	JobSTnetTest
+	JobIpefTest
+	JobSaveSettings
 )
 
 type backgroundJobMsg struct {
 	result string
 }
+
+type continueJobs struct{}
 
 type MenuList struct {
 	list                list.Model
@@ -93,10 +89,11 @@ type MenuList struct {
 	state               MenuState
 	prevState           MenuState
 	spinner             spinner.Model
+	spinnerMsg          string
 	backgroundJobResult string
 	selectColor         string
 	menuTitle           string
-	showTitle           bool
+	jobList             map[int]string
 }
 
 func (m MenuList) Init() tea.Cmd {
@@ -112,7 +109,7 @@ func (m MenuList) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case StateSpinner:
 		return m.updateSpinner(msg)
 	case StateResultDisplay:
-		return m.updateResultDisplay(msg)
+		return m.updateViewResultDisplay(msg)
 	default:
 		return m, nil
 	}
@@ -137,31 +134,27 @@ func (m *MenuList) updateMainMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ok {
 				m.choice = string(i)
 				switch m.choice {
-				case "Run ALL Tests":
+				case "Run ALL Tests", "Run Internet Speed Tests Only", "Run Iperf Test Only", "Save Settings":
+					BuildJobList(m)
 					m.prevState = m.state
 					m.state = StateSpinner
-					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob("Run ALL Tests"))
-				case "Run Internet Speed Tests Only":
-					m.prevState = m.state
-					m.state = StateSpinner
-					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob("Run Internet Speed Tests Only"))
-				case "Run Iperf Test Only":
-					m.prevState = m.state
-					m.state = StateSpinner
-					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob("Run Iperf Test Only"))
+					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
 				case "Change Settings":
 					m.prevState = m.state
 					m.state = StateSettingsMenu
 					m.updateListItems()
 					return m, nil
-				case "Save Settings":
-					m.prevState = m.state
-					m.state = StateSpinner
-					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob("Save Settings"))
 				}
 			}
 			return m, nil
 		}
+		// case jobListMsg:
+
+		// 	// m.state = StateResultDisplay
+		// 	// return m, nil
+		// 	m.prevState = m.state
+		// 	m.state = StateSpinner
+		// 	return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
 	}
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
@@ -205,8 +198,8 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "esc", "ctrl+c":
-			return m, tea.Quit
+		// case "q", "esc", "ctrl+c":
+		// 	return m, tea.Quit
 		default:
 			// For other key presses, update the spinner
 			var cmd tea.Cmd
@@ -214,11 +207,15 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 	case backgroundJobMsg:
-		// Remove this line to prevent overwriting m.prevState
-		// m.prevState = m.state
+		// if len(m.jobList) <= 0 {
 		m.backgroundJobResult = msg.result
 		m.state = StateResultDisplay
 		return m, nil
+		// } else {
+		// 	return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
+		// }
+	case continueJobs:
+		return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
 	default:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -226,7 +223,7 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *MenuList) updateResultDisplay(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *MenuList) updateViewResultDisplay(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -241,12 +238,41 @@ func (m *MenuList) updateResultDisplay(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *MenuList) startBackgroundJob(jobType string) tea.Cmd {
+func (m *MenuList) startBackgroundJob() tea.Cmd {
 	return func() tea.Msg {
-		// Simulate a background job
-		time.Sleep(3 * time.Second)
-		// Return the result
-		return backgroundJobMsg{result: fmt.Sprintf("%s completed successfully!", jobType)}
+		if len(m.jobList) == 0 {
+			return backgroundJobMsg{result: "All jobs completed successfully!"}
+		}
+
+		// Grab the first job in the list
+		for i := range m.jobList {
+			runJob := m.jobList[i]
+			switch runJob {
+			case "CloudFlare":
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+				m.spinnerMsg = "Running Cloudflare Speed test"
+				time.Sleep(3 * time.Second)
+			case "MLab":
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("57"))
+				m.spinnerMsg = "Running MLab Speed test"
+				time.Sleep(3 * time.Second)
+			case "Iperf":
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("200"))
+				m.spinnerMsg = "Running Iperf Speed test"
+				time.Sleep(3 * time.Second)
+			}
+
+			// Remove the job after running
+			delete(m.jobList, i)
+			break // Exit the loop after the first job is run
+		}
+
+		// Continue running the next job if there are any left
+		if len(m.jobList) > 0 {
+			return continueJobs{}
+		} else {
+			return backgroundJobMsg{result: "Completed successfully!"}
+		}
 	}
 }
 
@@ -255,16 +281,16 @@ func (m MenuList) View() string {
 	case StateMainMenu, StateSettingsMenu:
 		return m.header + "\n" + m.list.View()
 	case StateSpinner:
-		return fmt.Sprintf("\n\n   %s %s\n\n", m.spinner.View(), "Processing...")
+		return fmt.Sprintf("\n\n   %s %s\n\n%v\nLength:%v", m.spinner.View(), m.spinnerMsg, m.jobList, len(m.jobList))
 	case StateResultDisplay:
-		return m.resultDisplayView()
+		return m.viewResultDisplay()
 	default:
 		return "Unknown state"
 	}
 }
 
-func (m MenuList) resultDisplayView() string {
-	return fmt.Sprintf("\n\n%s\n\nPress 'q' or 'esc' to return.", m.backgroundJobResult)
+func (m MenuList) viewResultDisplay() string {
+	return fmt.Sprintf("\n\n%s\n\nPress 'esc' to return.", m.backgroundJobResult)
 }
 
 func (m *MenuList) updateListItems() {
@@ -285,7 +311,36 @@ func (m *MenuList) updateListItems() {
 	m.list.ResetSelected()
 }
 
-func ShowMenuList(menuTitle string, showtitle bool, selectColor string, header string, headerIP string) string {
+func BuildJobList(m *MenuList) {
+	switch m.choice {
+	case "Run ALL Tests":
+		m.jobList = map[int]string{
+			0: "CloudFlare",
+			1: "MLab",
+			2: "Iperf",
+		}
+	case "Run Internet Speed Tests Only":
+		m.jobList = map[int]string{
+			0: "CloudFlare",
+			1: "MLab",
+			2: "Iperf",
+		}
+	case "Run Iperf Test Only":
+		m.jobList = map[int]string{
+			0: "CloudFlare",
+			1: "MLab",
+			2: "Iperf",
+		}
+	case "Save Settings":
+		m.jobList = map[int]string{
+			0: "CloudFlare",
+			1: "MLab",
+			2: "Iperf",
+		}
+	}
+}
+
+func ShowMenuList(selectColor string, header string, headerIP string) {
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(selectColor))
 	titleStyle = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(selectColor))
 
@@ -293,14 +348,14 @@ func ShowMenuList(menuTitle string, showtitle bool, selectColor string, header s
 
 	// Initialize the list with empty items; items will be set in updateListItems
 	l := list.New([]list.Item{}, itemDelegate{}, defaultWidth, listHeight)
-	l.Title = menuTitle
+	l.Title = "Main Menu"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
-	l.SetShowTitle(showtitle)
+	l.SetShowTitle(true)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
-	l.KeyMap.ShowFullHelp = key.NewBinding() // remove '?' help
+	l.KeyMap.ShowFullHelp = key.NewBinding() // remove '?' help option
 
 	// Initialize the spinner
 	s := spinner.New()
@@ -314,22 +369,46 @@ func ShowMenuList(menuTitle string, showtitle bool, selectColor string, header s
 		state:       StateMainMenu,
 		spinner:     s,
 		selectColor: selectColor,
-		menuTitle:   menuTitle,
-		showTitle:   showtitle,
+		spinnerMsg:  "Perro sucio",
 	}
 
 	m.updateListItems()
 
 	m.list.KeyMap.Quit = key.NewBinding(
-		key.WithKeys("esc", "ctrl+c"), // you can add 'q' to escape here
+		key.WithKeys("esc", "ctrl+c"),
 		key.WithHelp("esc", "quit"),
 	)
 
-	finalM, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
+	_, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
 	if err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
-	menuModel, _ := finalM.(MenuList)
-	return menuModel.choice
+}
+
+type item string
+
+func (i item) FilterValue() string { return "" }
+
+type itemDelegate struct{}
+
+func (d itemDelegate) Height() int                             { return 1 }
+func (d itemDelegate) Spacing() int                            { return 0 }
+func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(item)
+	if !ok {
+		return
+	}
+
+	str := fmt.Sprintf("%d. %s", index+1, i)
+
+	fn := itemStyle.Render
+	if index == m.Index() {
+		fn = func(s ...string) string {
+			return selectedItemStyle.Render("> " + strings.Join(s, " "))
+		}
+	}
+
+	fmt.Fprint(w, fn(str))
 }

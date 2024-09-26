@@ -5,14 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/madzumo/speedtest/internal/bubbles"
 	hp "github.com/madzumo/speedtest/internal/helpers"
 	"github.com/playwright-community/playwright-go"
 )
 
 func cfTest(showBrowser bool) {
-	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, "Cloudflare Speed Test....", "214") // Run spinner in a goroutine
+	// quit := make(chan struct{})
+	// go bubbles.ShowSpinner(quit, "Cloudflare Speed Test....", "214") // Run spinner in a goroutine
 
 	// Start Playwright
 	pw, err := playwright.Run()
@@ -106,8 +105,8 @@ func cfTest(showBrowser bool) {
 		log.Fatalf("could not stop Playwright: %v", err)
 	}
 
-	close(quit)
-	time.Sleep(2 * time.Second)
+	// close(quit)
+	// time.Sleep(2 * time.Second)
 	testResult := fmt.Sprintf("Cloudflare Test -> Down:%s, Up:%s", textDown, textUp)
 	fmt.Println(hp.LipOutputStyle.Render(testResult))
 	hp.WriteLogFile(fmt.Sprintf("🐇%s", testResult))
