@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	hp "github.com/madzumo/speedtest/internal/helpers"
@@ -27,36 +29,35 @@ var (
 	menuMainColor     = "205"
 	menuSettingsColor = "111"
 	menuSMTPcolor     = "184"
+	menuTextColor     = "100"
+
+	menuTOP = []string{
+		"Run ALL Tests",
+		"Run Internet Speed Tests Only",
+		"Run Iperf Test Only",
+		"Change Settings",
+		"Save Settings",
+	}
+	menuSettings = []string{
+		"Set Iperf Server IP",
+		"Set Iperf Port number",
+		"Set Repeat Test Interval in Minutes",
+		"Set MSS Size",
+		"Configure SMTP Settings",
+		"Toggle: CloudFlare Test",
+		"Toggle: M-Labs Test",
+		"Toggle: Speedtest.net",
+		"Toggle: Show Browser on Speed Tests",
+	}
+	menuSMTP = []string{
+		"Set SMTP Server",
+		"Set SMTP Port",
+		"Set SMTP Username",
+		"Set SMTP Password",
+		"Set E-Mail Subject",
+		"Set E-Mail Message",
+	}
 )
-
-var menuTOP = []string{
-	"Run ALL Tests",
-	"Run Internet Speed Tests Only",
-	"Run Iperf Test Only",
-	"Change Settings",
-	"Save Settings",
-}
-
-var menuSettings = []string{
-	"Set Iperf Server IP",
-	"Set Iperf Port number",
-	"Set Repeat Test Interval in Minutes",
-	"Set MSS Size",
-	"Configure SMTP Settings",
-	"Toggle: Use CloudFlare",
-	"Toggle: Use M-Labs",
-	"Toggle: Use Speedtest.net",
-	"Toggle: Show Browser on Speed Tests",
-}
-
-var menuSMTP = []string{
-	"Set SMTP Server",
-	"Set SMTP Port",
-	"Set SMTP Username",
-	"Set SMTP Password",
-	"Set E-Mail Subject",
-	"Set E-Mail Message",
-}
 
 type MenuState int
 
@@ -67,16 +68,6 @@ const (
 	StateResultDisplay
 	StateSMTPMenu
 	StateTextInput
-)
-
-type backgroundJobTypes int
-
-const (
-	JobCloudFlareTest backgroundJobTypes = iota
-	JobMLabTest
-	JobSTnetTest
-	JobIpefTest
-	JobSaveSettings
 )
 
 type backgroundJobMsg struct {
@@ -95,9 +86,9 @@ type MenuList struct {
 	spinner             spinner.Model
 	spinnerMsg          string
 	backgroundJobResult string
-	selectColor         string
-	menuTitle           string
 	jobList             map[int]string
+	textInput           textinput.Model
+	inputPrompt         string
 }
 
 func (m MenuList) Init() tea.Cmd {
@@ -116,6 +107,8 @@ func (m MenuList) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateViewResultDisplay(msg)
 	case StateSMTPMenu:
 		return m.updateSMTPMenu(msg)
+	case StateTextInput:
+		return m.updateTextInput(msg)
 	default:
 		return m, nil
 	}
@@ -170,6 +163,37 @@ func (m *MenuList) updateMainMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.textInput, cmd = m.textInput.Update(msg)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyEnter:
+			// User pressed enter, save the input
+			inputValue := m.textInput.Value()
+			// Validate the input
+			if _, err := strconv.Atoi(inputValue); err != nil {
+				m.backgroundJobResult = fmt.Sprintf("Invalid port number: %s", inputValue)
+			} else {
+				// Save the port number to settings
+				// m.settings.IperfPort = inputValue
+				m.backgroundJobResult = fmt.Sprintf("Iperf Port Number set to %s.", inputValue)
+			}
+			m.prevState = m.state
+			m.state = StateResultDisplay
+			return m, nil
+		case tea.KeyEsc:
+			// User pressed Esc, go back to settings menu
+			m.state = StateSettingsMenu
+			return m, nil
+		}
+	}
+
+	return m, cmd
+}
+
 func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -192,6 +216,20 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuMainColor))
 					m.state = StateMainMenu
 					m.updateListItems()
+					return m, nil
+				case "Set Iperf Port number":
+					// Transition to text input state
+					m.prevState = m.state
+					m.state = StateTextInput
+					m.inputPrompt = "Enter Iperf Port Number: "
+					m.textInput = textinput.New()
+					m.textInput.Placeholder = "e.g., 5201"
+					m.textInput.Focus()
+					m.textInput.CharLimit = 5 // Port numbers are up to 5 digits
+					m.textInput.Width = 20
+					// Optional: Style the text input
+					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
+					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 					return m, nil
 				case "Configure SMTP Settings":
 					m.list.Title = "Main Menu->Settings->SMTP"
@@ -345,6 +383,8 @@ func (m MenuList) View() string {
 		return fmt.Sprintf("\n\n   %s %s\n\n", m.spinner.View(), m.spinnerMsg)
 	case StateResultDisplay:
 		return m.viewResultDisplay()
+	case StateTextInput:
+		return m.viewInputText()
 	default:
 		return "Unknown state"
 	}
@@ -353,6 +393,12 @@ func (m MenuList) View() string {
 func (m MenuList) viewResultDisplay() string {
 	outro := hp.LipStandardStyle.Render("Press 'esc' to return.")
 	return fmt.Sprintf("\n\n%s\n\n%s", m.backgroundJobResult, outro)
+}
+
+func (m MenuList) viewInputText() string {
+	promptStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(menuTextColor)).Bold(true)
+	return fmt.Sprintf("\n\n%s\n\n%s", promptStyle.Render(m.inputPrompt), m.textInput.View())
+
 }
 
 func (m *MenuList) updateListItems() {
