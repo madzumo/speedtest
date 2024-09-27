@@ -11,6 +11,7 @@ It uses [speedtest.net](https://www.speedtest.net/), [Cloud Flare](https://speed
 - Saves the result to a log file in the same location as the executable for documentation.
 - Runs Internet speed test on each pass to document client host bandwidth when performing the iper3 test.
 - Allows you to save a congifuration file to distribute settings to other users.
+- Can send e-mail of test results to desired e-mail recipient.
 - Options you can change: 
     - Port number of the Iperf server
     - Repeat test time interval
@@ -28,11 +29,11 @@ iperf3 -s -p 5201
 - **Option 1**: to run All tests. Internet Speed test and Iperf3.
 - **Option 2**: Internet speeds tests only.
 - **Option 3**: Iperf test only.
-- **Option 4**: Change additional settings as shown in green above.
+- **Option 4**: Change additional settings which are shown green in the toolbar.
 - **Option 5**: Save configuration as 'settings.json' in current directory for sharing in network.
 
 
-![Menu](media/speed1.png)
+![Menu](media/speed3.png)
 
 ## Troubleshoot
 
