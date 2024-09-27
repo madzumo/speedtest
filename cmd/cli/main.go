@@ -27,41 +27,54 @@ type configSettings struct {
 
 func main() {
 	hp.SetPEMfiles()
-	config, _ := getConfig()
-	headerX, headerIP := showHeaderPlusConfigPlusIP(config)
-
-	ShowMenuList(headerX, headerIP)
+	config, _ := getConfigSettings()
+	headerX, headerIP := showHeaderPlusConfigPlusIP(config, false, false)
+	ShowMenuList(headerX, headerIP, config)
 }
 
-func showHeaderPlusConfigPlusIP(config *configSettings) (string, string) {
-	var isps, mssCustom string
-	if config.CloudFrontTest {
-		isps += "CF,"
-	}
-	if config.MLabTest {
-		isps += "ML,"
-	}
-	if config.NetTest {
-		isps += "NET"
-	}
-
-	if config.MSS == 0 {
-		mssCustom = "Auto"
-	} else {
-		mssCustom = strconv.Itoa(config.MSS)
-	}
-
+func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, emailMenu bool) (string, string) {
+	var header string
 	myIP := hp.GetLocalIP()
-	header := hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-		hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s->%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
-			config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
-		hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 
-	header2 := myIP
-	return header, header2
+	if emailMenu {
+		header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
+			hp.LipConfigSMTPStyle.Render(fmt.Sprintf("SMTP Host:%s:%v  Username:%s  From:%s  To:%s  Subj:%s",
+				config.EmailSettings.SMTPHost, config.EmailSettings.SMTPPort, config.EmailSettings.UserName, config.EmailSettings.From,
+				config.EmailSettings.To, config.EmailSettings.Subject)) + "\n" +
+			hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
+	} else {
+		var isps, mssCustom string
+		if config.CloudFrontTest {
+			isps += "CF,"
+		}
+		if config.MLabTest {
+			isps += "ML,"
+		}
+		if config.NetTest {
+			isps += "NET"
+		}
+
+		if config.MSS == 0 {
+			mssCustom = "Auto"
+		} else {
+			mssCustom = strconv.Itoa(config.MSS)
+		}
+		if settingsMenu {
+			header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
+				hp.LipConfigSettingsStyle.Render(fmt.Sprintf("Iperf:%s:%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
+					config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
+				hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
+		} else {
+			header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
+				hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s:%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
+					config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
+				hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
+		}
+	}
+	return header, myIP
 }
 
-func getConfig() (*configSettings, error) {
+func getConfigSettings() (*configSettings, error) {
 	configTemp := configSettings{
 		IperfS:         "0.0.0.0",
 		IperfP:         5201,
@@ -99,23 +112,4 @@ func saveConfig(config *configSettings) error {
 		return err
 	}
 	return os.WriteFile(configFileName, data, 0644)
-}
-
-func getUserInputString(msg string) string {
-	var input string
-	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
-	fmt.Scanln(&input)
-	return input
-}
-
-func getUserInputInt(msg string) int {
-	var input string
-	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
-	fmt.Scanln(&input)
-	num, err := strconv.Atoi(input)
-	if err != nil {
-		fmt.Println(hp.LipErrorStyle.Render("Entry must be a numeric number"))
-		return 0
-	}
-	return num
 }

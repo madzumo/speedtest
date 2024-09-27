@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 
-	"time"
-
-	"github.com/madzumo/speedtest/internal/bubbles"
 	hp "github.com/madzumo/speedtest/internal/helpers"
 	"github.com/showwin/speedtest-go/speedtest"
 )
@@ -25,8 +22,8 @@ import (
 
 func netTest() {
 	var testResult string
-	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, "Speedtest.NET Test....", "196") // Run spinner in a goroutine
+	// quit := make(chan struct{})
+	// go bubbles.ShowSpinner(quit, "Speedtest.NET Test....", "196") // Run spinner in a goroutine
 
 	var speedtestClient = speedtest.New()
 	// Get user's network information
@@ -49,8 +46,8 @@ func netTest() {
 
 		s.Context.Reset() // reset counter
 	}
-	close(quit)
-	time.Sleep(1 * time.Second)
+	// close(quit)
+	// time.Sleep(1 * time.Second)
 	fmt.Println(hp.LipOutputStyle.Render(testResult))
 	hp.WriteLogFile(fmt.Sprintf("⚡%s", testResult))
 }

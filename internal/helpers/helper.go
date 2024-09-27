@@ -25,14 +25,17 @@ var (
 ░▒▓███████▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░▒▓████████▓▒░▒▓███████▓▒░  
                                                                   
 `
-	LipStandardStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-	LipHeaderStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
-	LipConfigStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
-	LipOutputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
-	LipErrorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
-	LipSystemMsgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
-	LipFooterStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	LipResetStyle     = lipgloss.NewStyle()
+	LipStandardStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Bold(true)
+	LipStandard2Style      = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
+	LipHeaderStyle         = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
+	LipConfigStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
+	LipConfigSettingsStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("111"))
+	LipConfigSMTPStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("184"))
+	LipOutputStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
+	LipErrorStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
+	LipSystemMsgStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
+	LipFooterStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	LipResetStyle          = lipgloss.NewStyle()
 )
 
 type EmailJob struct {
@@ -156,3 +159,22 @@ func WriteLogFile(logData string) {
 		fmt.Printf("failed to write to Log file: %v\n", err)
 	}
 }
+
+// func getUserInputString(msg string) string {
+// 	var input string
+// 	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
+// 	fmt.Scanln(&input)
+// 	return input
+// }
+
+// func getUserInputInt(msg string) int {
+// 	var input string
+// 	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
+// 	fmt.Scanln(&input)
+// 	num, err := strconv.Atoi(input)
+// 	if err != nil {
+// 		fmt.Println(hp.LipErrorStyle.Render("Entry must be a numeric number"))
+// 		return 0
+// 	}
+// 	return num
+// }
