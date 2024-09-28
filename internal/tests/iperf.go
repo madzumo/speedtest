@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
-func runIperf(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) (bool, int) {
+func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) (bool, int) {
 	var bubbleText string
 	if doDownloadTest {
 		bubbleText = "Iperf test Download..."

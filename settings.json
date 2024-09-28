@@ -1,0 +1,22 @@
+{
+  "iperfServer": "0.0.0.0",
+  "iperfPort": 5201,
+  "repeatInterval": 5,
+  "MSS": 0,
+  "CloudFrontTest": true,
+  "MLabTest": false,
+  "SpeedNetTest": true,
+  "showBrowser": false,
+  "emailSettings": {
+    "from": "Jabuticaba",
+    "to": "madzumo@gmail.com",
+    "subject": "Speed Test Report",
+    "body": "Test",
+    "smtpHost": "smtp.domain.com",
+    "smtpPort": "587",
+    "userName": "Pepita",
+    "passWord": "password",
+    "useOutlook": true,
+    "attachment": ""
+  }
+}

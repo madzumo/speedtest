@@ -17,6 +17,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	hp "github.com/madzumo/speedtest/internal/helpers"
+	t "github.com/madzumo/speedtest/internal/tests"
 )
 
 const listHeight = 14
@@ -43,25 +44,26 @@ var (
 		"Configure Settings",
 		"Save Settings",
 	}
-	menuSettings = [][]string{
+	menuSettings = [][]string{ //menu Text + prompt text
 		{"Set Iperf Server IP", "Enter Iperf Server IP:"},
 		{"Set Iperf Port number", "Enter Iperf Port Number:"},
 		{"Set Repeat Test Interval in Minutes", "Enter Repeat Test Interval in Minutes:"},
 		{"Set MSS Size", "Enter Maximum Segment Size (MSS) for Iperf Test:"},
-		{"Configure SMTP Settings", ""},
+		{"Configure Email Settings", ""},
 		{"Toggle CloudFlare Test", ""},
 		{"Toggle M-Labs Test", ""},
 		{"Toggle Speedtest.net", ""},
 		{"Toggle Show Browser on Speed Tests", ""},
 	}
-	menuSMTP = [][]string{
-		{"Set SMTP Server", "Enter SMTP Host Address:"},
+	menuSMTP = [][]string{ //menu Text + prompt text
+		{"Toggle Email Method", ""},
+		{"Set SMTP Host", "Enter SMTP Host Address:"},
 		{"Set SMTP Port", "Enter SMTP Port Number:"},
 		{"Set Auth Username", "Enter Username to Authenticate SMTP:"},
 		{"Set Auth Password", "Enter Password to Authenticate SMTP:"},
-		{"Set Sender Name", "Enter Sender Name for sending Reports:"},
-		{"Set E-mail Recipient", "Enter Recipient E-mail Address for reports:"},
-		{"Set E-Mail Subject", "Enter Subject title in outgoing report E-mail:"},
+		{"Set From: Address", "Enter Sender address (From:) for sending reports:"},
+		{"Set To: Address", "Enter Recipient address (To:) for sending reports:"},
+		// {"Set E-Mail Subject", "Enter Subject title in outgoing report E-mail:"},
 		// {"Set E-Mail Message","Enter Message for E-mail report:",},
 	}
 )
@@ -83,6 +85,16 @@ type backgroundJobMsg struct {
 
 type continueJobs struct{}
 
+type JobList int
+
+const (
+	CFtest JobList = iota
+	MLTest
+	NETtest
+	IperfTest
+	Settings
+)
+
 type MenuList struct {
 	list                list.Model
 	choice              string
@@ -94,11 +106,12 @@ type MenuList struct {
 	spinner             spinner.Model
 	spinnerMsg          string
 	backgroundJobResult string
-	jobList             map[int]string
 	textInput           textinput.Model
 	inputPrompt         string
 	textInputError      bool
 	configSettings      *configSettings
+	jobOutcome          string
+	jobsList            map[int]string
 }
 
 func (m MenuList) Init() tea.Cmd {
@@ -219,12 +232,12 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
 					m.backgroundJobResult = fmt.Sprintf("MSS set to %s", inputValue)
 				}
-			case menuSMTP[0][1]:
+			case menuSMTP[1][1]:
 				m.configSettings.EmailSettings.SMTPHost = inputValue
 				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
 				m.backgroundJobResult = fmt.Sprintf("SMTP Host set to: %s", inputValue)
 
-			case menuSMTP[1][1]:
+			case menuSMTP[2][1]:
 				if _, err := strconv.Atoi(inputValue); err != nil { //validate port number
 					m.backgroundJobResult = fmt.Sprintf("Invalid port number: %s", inputValue)
 					m.textInputError = true
@@ -233,37 +246,33 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
 					m.backgroundJobResult = fmt.Sprintf("SMTP Port Number set to: %s", inputValue)
 				}
-			case menuSMTP[2][1]:
+			case menuSMTP[3][1]:
 				m.configSettings.EmailSettings.UserName = inputValue
 				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
 				m.backgroundJobResult = fmt.Sprintf("SMTP Auth Username set to: %s", inputValue)
 
-			case menuSMTP[3][1]:
+			case menuSMTP[4][1]:
 				m.configSettings.EmailSettings.PassWord = inputValue
 				m.backgroundJobResult = fmt.Sprintf("SMTP Auth Password set to: %s", inputValue)
-
-			case menuSMTP[4][1]:
-				m.configSettings.EmailSettings.From = inputValue
-				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-				m.backgroundJobResult = fmt.Sprintf("Sender Name set to: %s", inputValue)
-
-			case menuSMTP[6][1]:
-				m.configSettings.EmailSettings.Subject = inputValue
-				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-				m.backgroundJobResult = fmt.Sprintf("Email Subject set to: %s", inputValue)
-
-			// case inputPromptMSG[9]:
-			// 	m.configSettings.EmailSettings.Body = inputValue
-			// 	m.backgroundJobResult = fmt.Sprintf("Email Message set to: %s", inputValue)
 
 			case menuSMTP[5][1]:
 				if err := checkmail.ValidateFormat(inputValue); err != nil {
 					m.backgroundJobResult = fmt.Sprintf("Not a valid E-mail Address: %s", inputValue)
 					m.textInputError = true
 				} else {
+					m.configSettings.EmailSettings.From = inputValue
+					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
+					m.backgroundJobResult = fmt.Sprintf("Sender From address set to: %s", inputValue)
+				}
+
+			case menuSMTP[6][1]:
+				if err := checkmail.ValidateFormat(inputValue); err != nil {
+					m.backgroundJobResult = fmt.Sprintf("Not a valid E-mail Address: %s", inputValue)
+					m.textInputError = true
+				} else {
 					m.configSettings.EmailSettings.To = inputValue
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-					m.backgroundJobResult = fmt.Sprintf("Recipient E-mail set to: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Recipient To address set to: %s", inputValue)
 				}
 			}
 			m.prevState = m.state
@@ -479,28 +488,15 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateMainMenu
 					m.updateListItems()
 					return m, nil
-				case menuSMTP[0][0]:
-					m.prevMenuState = m.state
-					m.prevState = m.state
-					m.state = StateTextInput
-					m.inputPrompt = menuSMTP[0][1]
-					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., mail.domain.com"
-					m.textInput.Focus()
-					m.textInput.CharLimit = 20
-					m.textInput.Width = 20
-					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
-					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
-					return m, nil
 				case menuSMTP[1][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
 					m.inputPrompt = menuSMTP[1][1]
 					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., 587"
+					m.textInput.Placeholder = "e.g., mail.domain.com"
 					m.textInput.Focus()
-					m.textInput.CharLimit = 5 // Port numbers are up to 5 digits
+					m.textInput.CharLimit = 20
 					m.textInput.Width = 20
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
@@ -511,9 +507,9 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateTextInput
 					m.inputPrompt = menuSMTP[2][1]
 					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., the Dude"
+					m.textInput.Placeholder = "e.g., 587"
 					m.textInput.Focus()
-					m.textInput.CharLimit = 100
+					m.textInput.CharLimit = 5 // Port numbers are up to 5 digits
 					m.textInput.Width = 20
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
@@ -524,7 +520,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateTextInput
 					m.inputPrompt = menuSMTP[3][1]
 					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., pass123"
+					m.textInput.Placeholder = "e.g., Jabuticaba"
 					m.textInput.Focus()
 					m.textInput.CharLimit = 100
 					m.textInput.Width = 20
@@ -537,7 +533,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateTextInput
 					m.inputPrompt = menuSMTP[4][1]
 					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., Jabuticaba"
+					m.textInput.Placeholder = "e.g., pass123"
 					m.textInput.Focus()
 					m.textInput.CharLimit = 100
 					m.textInput.Width = 20
@@ -550,7 +546,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateTextInput
 					m.inputPrompt = menuSMTP[5][1]
 					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., JoeMama@domain.com"
+					m.textInput.Placeholder = "e.g., Its_A_Me@domain.com"
 					m.textInput.Focus()
 					m.textInput.CharLimit = 100
 					m.textInput.Width = 50
@@ -563,12 +559,20 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateTextInput
 					m.inputPrompt = menuSMTP[6][1]
 					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., Speed Report"
+					m.textInput.Placeholder = "e.g., Joe_Mama@domain.com"
 					m.textInput.Focus()
 					m.textInput.CharLimit = 100
-					m.textInput.Width = 20
+					m.textInput.Width = 50
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
+					return m, nil
+				case menuSMTP[0][0]:
+					if m.configSettings.EmailSettings.UseOutlook {
+						m.configSettings.EmailSettings.UseOutlook = false
+					} else {
+						m.configSettings.EmailSettings.UseOutlook = true
+					}
+					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
 					return m, nil
 				default:
 					// Simulate settings change
@@ -589,38 +593,59 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *MenuList) startBackgroundJob() tea.Cmd {
 	return func() tea.Msg {
 		// Grab the first job in the list
-		for i := range m.jobList {
-			runJob := m.jobList[i]
-			switch runJob {
-			case "CloudFlare":
-				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("220"))
+		if len(m.jobsList) > 0 {
+			if m.jobsList[0] != "" {
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("51")) //white = 231
+				m.spinnerMsg = "Installing Browser Components"
+				// Redirect stdout and stderr to suppress Playwright output
+				stdout := os.Stdout
+				stderr := os.Stderr
+				// Create temporary files to capture the output
+				tempOut, _ := os.CreateTemp("", "playwright-out-*")
+				tempErr, _ := os.CreateTemp("", "playwright-err-*")
+				// Redirect stdout and stderr
+				os.Stdout = tempOut
+				os.Stderr = tempErr
+
+				hp.InstallPlaywright()
+
+				// Reset stdout and stderr after installation
+				os.Stdout = stdout
+				os.Stderr = stderr
+				// Clear the terminal to remove Playwright output
+				// tea.ClearScreen()
+				delete(m.jobsList, 0)
+			} else if m.jobsList[1] != "" {
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
 				m.spinnerMsg = "Running Cloudflare Speed test"
-				time.Sleep(3 * time.Second)
-			case "MLab":
-				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("57"))
+				m.jobOutcome += t.CFTest(m.configSettings.ShowBrowser)
+				// time.Sleep(3 * time.Second)
+				delete(m.jobsList, 1)
+			} else if m.jobsList[2] != "" {
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("129"))
 				m.spinnerMsg = "Running MLab Speed test"
 				time.Sleep(3 * time.Second)
-			case "NET":
-				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("124"))
+				delete(m.jobsList, 2)
+			} else if m.jobsList[3] != "" {
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 				m.spinnerMsg = "Running Speedtest.NET test"
 				time.Sleep(3 * time.Second)
-			case "Iperf":
-				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("40"))
+				delete(m.jobsList, 3)
+			} else if m.jobsList[4] != "" {
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("156"))
 				m.spinnerMsg = "Running Iperf test"
 				time.Sleep(3 * time.Second)
-			case "SaveSettings":
-				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("38"))
+				delete(m.jobsList, 4)
+			} else if m.jobsList[5] != "" {
+				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
 				m.spinnerMsg = "Saving Settings"
+				m.spinner.Tick()
 				time.Sleep(1 * time.Second)
 				saveConfig(m.configSettings)
+				delete(m.jobsList, 5)
 			}
-
-			delete(m.jobList, i) // Remove the job after running
-			break                // Exit the loop after the first job is run
 		}
-
-		// Continue running the next job if there are any left
-		if len(m.jobList) > 0 {
+		if len(m.jobsList) > 0 {
 			return continueJobs{}
 		} else {
 			return backgroundJobMsg{result: "Completed successfully!"}
@@ -633,7 +658,7 @@ func (m MenuList) View() string {
 	case StateMainMenu, StateSettingsMenu, StateSMTPMenu:
 		return m.header + "\n" + m.list.View()
 	case StateSpinner:
-		return fmt.Sprintf("\n\n   %s %s\n\n", m.spinner.View(), m.spinnerMsg)
+		return m.viewSpinner()
 	case StateResultDisplay:
 		return m.viewResultDisplay()
 	case StateTextInput:
@@ -641,6 +666,13 @@ func (m MenuList) View() string {
 	default:
 		return "Unknown state"
 	}
+}
+
+func (m MenuList) viewSpinner() string {
+	// tea.ClearScreen()
+	spinnerBase := fmt.Sprintf("\n\n   %s %s\n\n", m.spinner.View(), m.spinnerMsg)
+	// fmt.Println(m.jobOutcome)
+	return spinnerBase + lipgloss.NewStyle().Foreground(lipgloss.Color("170")).Render(m.jobOutcome)
 }
 
 func (m MenuList) viewResultDisplay() string {
@@ -686,33 +718,37 @@ func (m *MenuList) updateListItems() {
 }
 
 func BuildJobList(m *MenuList) {
-	m.jobList = map[int]string{}
+	m.jobOutcome = ""
+	m.jobsList = map[int]string{}
 	switch m.choice {
-	case "Run ALL Tests":
+	case menuTOP[0]:
+		m.jobsList[0] = "PLAY"
 		if m.configSettings.CloudFrontTest {
-			m.jobList[0] = "CloudFlare"
+			m.jobsList[1] = "CF"
 		}
 		if m.configSettings.MLabTest {
-			m.jobList[1] = "MLab"
+			m.jobsList[2] = "ML"
 		}
 		if m.configSettings.NetTest {
-			m.jobList[2] = "NET"
+			m.jobsList[3] = "NET"
 		}
-		m.jobList[3] = "Iperf"
-	case "Run Internet Speed Tests Only":
+		m.jobsList[4] = "IP"
+
+	case menuTOP[1]:
+		m.jobsList[0] = "PLAY"
 		if m.configSettings.CloudFrontTest {
-			m.jobList[0] = "CloudFlare"
+			m.jobsList[1] = "CF"
 		}
 		if m.configSettings.MLabTest {
-			m.jobList[1] = "MLab"
+			m.jobsList[2] = "ML"
 		}
 		if m.configSettings.NetTest {
-			m.jobList[2] = "NET"
+			m.jobsList[3] = "NET"
 		}
-	case "Run Iperf Test Only":
-		m.jobList[3] = "Iperf"
-	case "Save Settings":
-		m.jobList[4] = "SaveSettings"
+	case menuTOP[2]:
+		m.jobsList[4] = "IP"
+	case menuTOP[4]:
+		m.jobsList[5] = "SETTINGS"
 	}
 }
 
@@ -742,7 +778,7 @@ func ShowMenuList(header string, headerIP string, cs *configSettings) {
 		headerIP:       headerIP,
 		state:          StateMainMenu,
 		spinner:        s,
-		spinnerMsg:     "Perro sucio",
+		spinnerMsg:     "Action Performing",
 		configSettings: cs,
 	}
 

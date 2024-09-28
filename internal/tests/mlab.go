@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func mlTest(showBrowser bool) {
+func MLTest(showBrowser bool) {
 	// quit := make(chan struct{})
 	// go bubbles.ShowSpinner(quit, "M-Lab Speed Test....", "57") // Run spinner in a goroutine
 

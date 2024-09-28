@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ import (
 // 	fmt.Println("*********************************")
 // }
 
-func netTest() {
+func NETTest() {
 	var testResult string
 	// quit := make(chan struct{})
 	// go bubbles.ShowSpinner(quit, "Speedtest.NET Test....", "196") // Run spinner in a goroutine

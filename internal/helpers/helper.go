@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/smtp"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/go-ole/go-ole"
+	"github.com/go-ole/go-ole/oleutil"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -39,25 +42,115 @@ var (
 )
 
 type EmailJob struct {
-	From     string `json:"from"`
-	To       string `json:"to"`
-	Subject  string `json:"subject"`
-	Body     string `json:"body"`
-	SMTPHost string `json:"smtpHost"`
-	SMTPPort string `json:"smtpPort"`
-	UserName string `json:"userName"`
-	PassWord string `json:"passWord"`
+	From       string `json:"from"`
+	To         string `json:"to"`
+	Subject    string `json:"subject"`
+	Body       string `json:"body"`
+	SMTPHost   string `json:"smtpHost"`
+	SMTPPort   string `json:"smtpPort"`
+	UserName   string `json:"userName"`
+	PassWord   string `json:"passWord"`
+	UseOutlook bool   `json:"useOutlook"`
+	Attachment string `json:"attachment"`
 }
 
-func (e *EmailJob) SendEmail() bool {
-	// auth := smtp.PlainAuth("", e.UserName, e.PassWord, e.SmtpHost)
-	return true
-}
-
-func NewemailJob() *EmailJob {
+func NewEmailJob() *EmailJob {
 	return &EmailJob{
 		To: "",
 	}
+}
+
+func (e *EmailJob) SendSMTP() string {
+	// Set up authentication information.
+	auth := smtp.PlainAuth("", e.UserName, e.PassWord, e.SMTPHost)
+
+	// Define the email headers and body.
+	from := e.From
+	to := []string{e.To}
+	subject := "Speed Test Report\n"
+	body := "Speed Test Report Incoming!.\n"
+
+	// Compose the message.
+	message := []byte(subject + "\n" + body)
+
+	// Set up the SMTP server and port.
+	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort)
+
+	// Send the email.
+	err := smtp.SendMail(smtpAddr, auth, from, to, message)
+	if err != nil {
+		return fmt.Sprintf("Failed to send email: %v", err)
+	}
+
+	return "Email sent successfully!"
+}
+
+func (e *EmailJob) SentOutlook(attachmentPath, sendTO string) string {
+	// // Try to start Outlook programmatically if it's not open
+	// err := exec.Command("outlook.exe").Start()
+	// if err != nil {
+	// 	return fmt.Sprintf("Failed to start Outlook: %v", err)
+	// }
+
+	// Initialize COM
+	err := ole.CoInitialize(0)
+	if err != nil {
+		return fmt.Sprintf("COM initialization failed: %v", err)
+	}
+	defer ole.CoUninitialize()
+
+	// Create a new COM object for Outlook
+	unknown, err := oleutil.CreateObject("Outlook.Application")
+	if err != nil {
+		return fmt.Sprintf("Failed to create Outlook object: %v", err)
+	}
+	defer unknown.Release()
+
+	// Get the Outlook Application interface
+	outlookApp, err := unknown.QueryInterface(ole.IID_IDispatch)
+	if err != nil {
+		return fmt.Sprintf("Failed to get IDispatch for Outlook: %v", err)
+	}
+	defer outlookApp.Release()
+
+	// Create a new MailItem
+	mailItem, err := oleutil.CallMethod(outlookApp, "CreateItem", 0) // 0 means olMailItem
+	if err != nil {
+		return fmt.Sprintf("Failed to create MailItem: %v", err)
+	}
+	mail := mailItem.ToIDispatch()
+	defer mail.Release()
+
+	// Set the email properties
+	oleutil.PutProperty(mail, "Subject", "Speed Test Report")
+	// oleutil.PutProperty(mail, "Body", "Speed Test Report Incoming!")
+	oleutil.PutProperty(mail, "To", sendTO)
+
+	if attachmentPath != "" {
+		// //1.Embed contents of a text file
+		// fileContent, err := os.ReadFile(attachmentPath)
+		// if err != nil {
+		// 	return fmt.Sprintf("Failed to read the text file: %v", err)
+		// }
+		// oleutil.PutProperty(mail, "Body", string(fileContent))
+
+		// Option 2: Add an attachment
+		attachments := oleutil.MustGetProperty(mail, "Attachments").ToIDispatch()
+		defer attachments.Release()
+		// Add the file as an attachment
+		_, err = oleutil.CallMethod(attachments, "Add", attachmentPath)
+		if err != nil {
+			return fmt.Sprintf("Failed to add attachment: %v", err)
+		}
+	}
+
+	// Send the email
+	_, err = oleutil.CallMethod(mail, "Send")
+	if err != nil {
+		return fmt.Sprintf("Failed to send email: %v", err)
+	}
+
+	return "Email sent successfully!"
 }
 
 func GetLocalIP() string {
@@ -132,7 +225,7 @@ func InstallPlaywright() (greatSuccess bool) {
 		PauseTerminalScreen()
 		greatSuccess = false
 	}
-	ClearTerminalScreen()
+	// ClearTerminalScreen()
 	return greatSuccess
 }
 
@@ -141,7 +234,7 @@ func SetLogFileName() string {
 	if err != nil {
 		fmt.Println("Error getting hostname of client:", err)
 	} else {
-		return fmt.Sprintf("SpeedTest_%s.txt", hostname)
+		return fmt.Sprintf("Speed_%s.txt", hostname)
 	}
 	return ""
 }
@@ -159,22 +252,3 @@ func WriteLogFile(logData string) {
 		fmt.Printf("failed to write to Log file: %v\n", err)
 	}
 }
-
-// func getUserInputString(msg string) string {
-// 	var input string
-// 	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
-// 	fmt.Scanln(&input)
-// 	return input
-// }
-
-// func getUserInputInt(msg string) int {
-// 	var input string
-// 	fmt.Println(hp.LipSystemMsgStyle.Render(msg))
-// 	fmt.Scanln(&input)
-// 	num, err := strconv.Atoi(input)
-// 	if err != nil {
-// 		fmt.Println(hp.LipErrorStyle.Render("Entry must be a numeric number"))
-// 		return 0
-// 	}
-// 	return num
-// }

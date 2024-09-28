@@ -26,6 +26,9 @@ type configSettings struct {
 }
 
 func main() {
+	// fig := figure.NewFigure("Welcome", "big", false)
+	// fig.Print()
+	// return
 	hp.SetPEMfiles()
 	config, _ := getConfigSettings()
 	headerX, headerIP := showHeaderPlusConfigPlusIP(config, false, false)
@@ -37,10 +40,16 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 	myIP := hp.GetLocalIP()
 
 	if emailMenu {
+		var emailMethod string
+		if config.EmailSettings.UseOutlook {
+			emailMethod = "Outlook"
+		} else {
+			emailMethod = "SMTP"
+		}
 		header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-			hp.LipConfigSMTPStyle.Render(fmt.Sprintf("SMTP Host:%s:%v  Username:%s  From:%s  To:%s  Subj:%s",
-				config.EmailSettings.SMTPHost, config.EmailSettings.SMTPPort, config.EmailSettings.UserName, config.EmailSettings.From,
-				config.EmailSettings.To, config.EmailSettings.Subject)) + "\n" +
+			hp.LipConfigSMTPStyle.Render(fmt.Sprintf("Method:%s  Host:%s:%v  From:%s To:%s",
+				emailMethod, config.EmailSettings.SMTPHost, config.EmailSettings.SMTPPort,
+				config.EmailSettings.From, config.EmailSettings.To)) + "\n" +
 			hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 	} else {
 		var isps, mssCustom string
