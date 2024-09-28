@@ -36,6 +36,8 @@ var (
 	textErrorColorBack  = "1"
 	textErrorColorFront = "15"
 	textResultJob       = "141" //PINK"205"
+	textJobOutcomeFront = "223"
+	// txtJobOutcomeBack   = "205"
 
 	menuTOP = []string{
 		"Run ALL Tests",
@@ -83,7 +85,9 @@ type backgroundJobMsg struct {
 	result string
 }
 
-type continueJobs struct{}
+type continueJobs struct {
+	jobResult string
+}
 
 type JobList int
 
@@ -112,6 +116,7 @@ type MenuList struct {
 	configSettings      *configSettings
 	jobOutcome          string
 	jobsList            map[int]string
+	iperfRepeat         int
 }
 
 func (m MenuList) Init() tea.Cmd {
@@ -262,7 +267,7 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.configSettings.EmailSettings.From = inputValue
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-					m.backgroundJobResult = fmt.Sprintf("Sender From address set to: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Sender (From) address set to: %s", inputValue)
 				}
 
 			case menuSMTP[6][1]:
@@ -272,7 +277,7 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.configSettings.EmailSettings.To = inputValue
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-					m.backgroundJobResult = fmt.Sprintf("Recipient To address set to: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Recipient (To) address set to: %s", inputValue)
 				}
 			}
 			m.prevState = m.state
@@ -423,8 +428,10 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		// case "q", "esc", "ctrl+c":
-		// 	return m, tea.Quit
+		case "q", "esc":
+			m.backgroundJobResult = "Job Cancelled"
+			m.state = StateResultDisplay
+			return m, nil
 		default:
 			// For other key presses, update the spinner
 			var cmd tea.Cmd
@@ -433,7 +440,9 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case backgroundJobMsg:
 		// if len(m.jobList) <= 0 {
-		m.backgroundJobResult = msg.result
+		m.backgroundJobResult = lipgloss.NewStyle().Foreground(lipgloss.Color(textJobOutcomeFront)).Bold(true).Render(m.jobOutcome) + "\n\n" + // msg.result
+			lipgloss.NewStyle().Foreground(lipgloss.Color(m.backgroundJobResult)).Render(msg.result)
+
 		m.state = StateResultDisplay
 		return m, nil
 	case continueJobs:
@@ -592,8 +601,8 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *MenuList) startBackgroundJob() tea.Cmd {
 	return func() tea.Msg {
-		// Grab the first job in the list
-		if len(m.jobsList) > 0 {
+		var continueResult string
+		if len(m.jobsList) > 0 { //check each job in Order, process then exit for next pass
 			if m.jobsList[0] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("51")) //white = 231
 				m.spinnerMsg = "Installing Browser Components"
@@ -618,24 +627,35 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 			} else if m.jobsList[1] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
 				m.spinnerMsg = "Running Cloudflare Speed test"
-				m.jobOutcome += t.CFTest(m.configSettings.ShowBrowser)
+				continueResult = t.CFTest(m.configSettings.ShowBrowser)
 				// time.Sleep(3 * time.Second)
+				// continueResult = "CF Job is done!"
 				delete(m.jobsList, 1)
 			} else if m.jobsList[2] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("129"))
 				m.spinnerMsg = "Running MLab Speed test"
-				time.Sleep(3 * time.Second)
+				continueResult = t.MLTest(m.configSettings.ShowBrowser)
+				// time.Sleep(3 * time.Second)
+				// continueResult = "MLab done"
 				delete(m.jobsList, 2)
 			} else if m.jobsList[3] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 				m.spinnerMsg = "Running Speedtest.NET test"
-				time.Sleep(3 * time.Second)
+				continueResult = t.NETTest()
+				// time.Sleep(3 * time.Second)
+				// continueResult = "NET done"
 				delete(m.jobsList, 3)
 			} else if m.jobsList[4] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("156"))
 				m.spinnerMsg = "Running Iperf test"
-				time.Sleep(3 * time.Second)
-				delete(m.jobsList, 4)
+
+				passed, result := t.IperfTest(m.configSettings.IperfS, true, m.configSettings.IperfP, m.configSettings.MSS)
+				continueResult = result
+				if passed {
+					delete(m.jobsList, 4)
+				} else {
+					time.Sleep(10 * time.Second)
+				}
 			} else if m.jobsList[5] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
 				m.spinnerMsg = "Saving Settings"
@@ -644,12 +664,15 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 				saveConfig(m.configSettings)
 				delete(m.jobsList, 5)
 			}
-		}
-		if len(m.jobsList) > 0 {
-			return continueJobs{}
+			return continueJobs{jobResult: continueResult}
 		} else {
 			return backgroundJobMsg{result: "Completed successfully!"}
 		}
+		// if len(m.jobsList) > 0 {
+		// 	return continueJobs{jobResult: continueResult}
+		// } else {
+		// 	return backgroundJobMsg{result: "Completed successfully!"}
+		// }
 	}
 }
 
@@ -671,13 +694,15 @@ func (m MenuList) View() string {
 func (m MenuList) viewSpinner() string {
 	// tea.ClearScreen()
 	spinnerBase := fmt.Sprintf("\n\n   %s %s\n\n", m.spinner.View(), m.spinnerMsg)
-	// fmt.Println(m.jobOutcome)
-	return spinnerBase + lipgloss.NewStyle().Foreground(lipgloss.Color("170")).Render(m.jobOutcome)
+
+	// return spinnerBase + m.jobOutcome
+	return spinnerBase + lipgloss.NewStyle().Foreground(lipgloss.Color(textJobOutcomeFront)).Bold(true).Render(m.jobOutcome)
 }
 
 func (m MenuList) viewResultDisplay() string {
 	outro := "Press 'esc' to return."
 	outroRender := hp.LipStandardStyle.Render(outro)
+	//lipgloss.NewStyle().Foreground(lipgloss.Color(textJobOutcomeFront)).Bold(true).Render(m.jobOutcome)
 	if m.textInputError {
 		m.backgroundJobResult = lipgloss.NewStyle().Foreground(lipgloss.Color(textErrorColorFront)).Background(lipgloss.Color(textErrorColorBack)).Bold(true).Render(m.backgroundJobResult)
 	} else {
@@ -718,6 +743,7 @@ func (m *MenuList) updateListItems() {
 }
 
 func BuildJobList(m *MenuList) {
+	m.iperfRepeat = 0
 	m.jobOutcome = ""
 	m.jobsList = map[int]string{}
 	switch m.choice {

@@ -6,25 +6,14 @@ import (
 	"time"
 
 	"github.com/BGrewell/go-iperf"
-	"github.com/madzumo/speedtest/internal/bubbles"
 	hp "github.com/madzumo/speedtest/internal/helpers"
 )
 
-func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) (bool, int) {
-	var bubbleText string
-	if doDownloadTest {
-		bubbleText = "Iperf test Download..."
-	} else {
-		bubbleText = "Iperf test Upload..."
-	}
-	quit := make(chan struct{})
-	go bubbles.ShowSpinner(quit, bubbleText, "13") // Run spinner in a goroutine
+func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissionMSS int) (bool, string) {
 
 	if !hp.IsPortOpen(serverIP, portNumber) {
-		close(quit)
-		time.Sleep(2 * time.Second)
-		fmt.Println(hp.LipErrorStyle.Render("Server unavailable. Iperf Server Client could be turned off."))
-		return false, 0
+		time.Sleep(1 * time.Second)
+		return false, "Server unreachable. Iperf on Server could be turned off. Retry in 10 seconds."
 	}
 	direction := "Iperf PC->Server (Upload)"
 	c := iperf.NewClient(serverIP)
@@ -43,9 +32,7 @@ func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissio
 	}
 	err := c.Start()
 	if err != nil {
-		fmt.Printf("failed to start client: %v\n", err)
-		// os.Exit(-1)
-		return false, 0
+		return false, fmt.Sprintf("failed to start client: %v\n", err)
 	}
 
 	<-c.Done
@@ -54,26 +41,22 @@ func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissio
 	var reportData map[string]interface{}
 	err = json.Unmarshal([]byte(reportX.String()), &reportData)
 	if err != nil {
-		fmt.Printf("failed to parse JSON report: %v\n", err)
-		return false, 0
+		return false, fmt.Sprintf("failed to parse JSON report: %v\n", err)
 	}
 
-	close(quit)
-	time.Sleep(2 * time.Second)
-
+	var testResult string
 	if end, ok := reportData["end"].(map[string]interface{}); ok {
 		if sumSent, ok := end["sum_sent"].(map[string]interface{}); ok {
 			if bitsPerSecond, ok := sumSent["bits_per_second"].(float64); ok {
 				mbps := bitsPerSecond / (1024 * 1024)
 				if mbps <= 0 {
-					fmt.Println("Server is busy. Wait for 10 seconds")
-					return false, 1
+					return false, "Server is busy. Retry in 10 Seconds."
 				}
-				testResult := fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
+				testResult = fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
 				fmt.Println(hp.LipOutputStyle.Render(testResult))
 				hp.WriteLogFile(fmt.Sprintf("🐒%s", testResult))
 			}
 		}
 	}
-	return true, 0
+	return true, testResult
 }

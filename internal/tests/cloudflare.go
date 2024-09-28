@@ -8,7 +8,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func CFTest(showBrowser bool) (resultOverview string) {
+func CFTest(showBrowser bool) string {
 	// Start Playwright
 	pw, err := playwright.Run()
 	if err != nil {
@@ -94,7 +94,6 @@ func CFTest(showBrowser bool) (resultOverview string) {
 	}
 
 	testResult := fmt.Sprintf("Cloudflare-> Down:%s  Up:%s", textDown, textUp)
-	fmt.Println(hp.LipOutputStyle.Render(testResult))
 	hp.WriteLogFile(fmt.Sprintf("🐇%s", testResult))
 
 	return testResult

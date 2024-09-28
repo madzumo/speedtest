@@ -4,7 +4,7 @@
   "repeatInterval": 5,
   "MSS": 0,
   "CloudFrontTest": true,
-  "MLabTest": false,
+  "MLabTest": true,
   "SpeedNetTest": true,
   "showBrowser": false,
   "emailSettings": {
