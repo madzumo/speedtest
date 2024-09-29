@@ -13,7 +13,7 @@ func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissio
 
 	if !hp.IsPortOpen(serverIP, portNumber) {
 		time.Sleep(1 * time.Second)
-		return false, "Server unreachable. Iperf on Server could be turned off. Retry in 10 seconds."
+		return false, "Server unreachable. Iperf on Server could be turned off. Retry in 15 seconds."
 	}
 	direction := "Iperf PC->Server (Upload)"
 	c := iperf.NewClient(serverIP)
@@ -50,7 +50,7 @@ func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissio
 			if bitsPerSecond, ok := sumSent["bits_per_second"].(float64); ok {
 				mbps := bitsPerSecond / (1024 * 1024)
 				if mbps <= 0 {
-					return false, "Server is busy. Retry in 10 Seconds."
+					return false, "Server is busy. Retry in 15 Seconds."
 				}
 				testResult = fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
 				hp.WriteLogFile(fmt.Sprintf("🐒%s", testResult))

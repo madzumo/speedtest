@@ -16,7 +16,7 @@ var (
 type configSettings struct {
 	IperfS         string      `json:"iperfServer"`
 	IperfP         int         `json:"iperfPort"`
-	Interval       int         `json:"repeatInterval"`
+	RepeatInterval int         `json:"repeatInterval"`
 	MSS            int         `json:"MSS"`
 	CloudFrontTest bool        `json:"CloudFrontTest"`
 	MLabTest       bool        `json:"MLabTest"`
@@ -86,13 +86,13 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 		}
 		if settingsMenu {
 			header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-				hp.LipConfigSettingsStyle.Render(fmt.Sprintf("Iperf:%s:%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
-					config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
+				hp.LipConfigSettingsStyle.Render(fmt.Sprintf("Iperf:%s:%v  Timeout:%d  MSS:%s  Tests:%s  Browser:%v  Repeat:%vs",
+					config.IperfS, config.IperfP, config.IperfTimeout, mssCustom, isps, config.ShowBrowser, config.RepeatInterval)) + "\n" +
 				hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 		} else {
 			header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-				hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s:%v  MSS:%s  Tests:%s  Browser:%v  Repeat:%vmin",
-					config.IperfS, config.IperfP, mssCustom, isps, config.ShowBrowser, config.Interval)) + "\n" +
+				hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s:%v  Timeout:%d  MSS:%s  Tests:%s  Browser:%v  Repeat:%vs",
+					config.IperfS, config.IperfP, config.IperfTimeout, mssCustom, isps, config.ShowBrowser, config.RepeatInterval)) + "\n" +
 				hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 		}
 	}
@@ -104,7 +104,7 @@ func getConfigSettings() (*configSettings, error) {
 	configTemp := configSettings{
 		IperfS:         "0.0.0.0",
 		IperfP:         5201,
-		Interval:       0,
+		RepeatInterval: 0,
 		MSS:            0,
 		CloudFrontTest: true,
 		MLabTest:       true,

@@ -55,9 +55,9 @@ var (
 		{"Toggle M-Labs Test", ""},
 		{"Toggle Speedtest.net", ""},
 		{"Toggle Show Browser on Speed Tests", ""},
-		{"Set Repeat Test Interval in Minutes", "Enter Repeat Test Interval in Minutes:"},
+		{"Set Repeat Test Interval", "Enter Repeat Interval in Seconds:"},
 		{"Set MSS Size", "Enter Maximum Segment Size (MSS) for Iperf Test:"},
-		{"Set Iperf Retry Timeout", "Enter Max seconds Iperf will Retry before Cancelling Test:"},
+		{"Set Iperf Retry Timeout", "Enter Max seconds Iperf will Retry before cancelling:"},
 	}
 	menuSMTP = [][]string{ //menu Text + prompt text
 		{"Toggle Email Service (SMTP/Outlook/OFF)", ""},
@@ -235,12 +235,12 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case menuSettings[7][1]:
 				if i, err := strconv.Atoi(inputValue); err != nil {
-					m.backgroundJobResult = fmt.Sprintf("Invalid entry for Minutes: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Invalid entry for Seconds: %s", inputValue)
 					m.textInputError = true
 				} else {
-					m.configSettings.Interval = i
+					m.configSettings.RepeatInterval = i
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
-					m.backgroundJobResult = fmt.Sprintf("Repeat Test Interval set -> %s minutes.", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Repeat Test Interval -> %s seconds.", inputValue)
 				}
 			case menuSettings[8][1]:
 				if i, err := strconv.Atoi(inputValue); err != nil {
@@ -258,7 +258,7 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.configSettings.IperfTimeout = i
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
-					m.backgroundJobResult = fmt.Sprintf("Iperf Retry Timeout set -> %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Iperf Retry Timeout -> %s seconds", inputValue)
 				}
 			case menuSMTP[1][1]:
 				m.configSettings.EmailSettings.SMTPHost = inputValue
@@ -495,7 +495,7 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.backgroundJobResult = m.jobOutcome + "\n\n" + msg.result + "\n"
 		}
 
-		if m.configSettings.Interval > 0 {
+		if m.configSettings.RepeatInterval > 0 {
 			m.state = StateInterval
 			return m, m.startInverval()
 		} else {
@@ -698,7 +698,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m *MenuList) startInverval() tea.Cmd {
 	return func() tea.Msg {
-		time.Sleep(time.Duration(m.configSettings.Interval) * time.Minute)
+		time.Sleep(time.Duration(m.configSettings.RepeatInterval) * time.Second)
 		return continueJobs{}
 	}
 }
@@ -768,7 +768,7 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 					continueResult += "\n" + result
 				}
 
-				if pass || m.iperfErrorCount >= 12 {
+				if pass || m.iperfErrorCount >= (m.configSettings.IperfTimeout/15) {
 					delete(m.jobsList, 4)
 				} else {
 					iperfOut = true
@@ -783,7 +783,7 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 			}
 			return continueJobs{jobResult: continueResult, iperfError: iperfOut}
 		} else {
-			return backgroundJobMsg{result: "All Tests Completed!"}
+			return backgroundJobMsg{result: "Job Complete!"}
 		}
 	}
 }
@@ -837,7 +837,7 @@ func (m MenuList) viewTextInput() string {
 }
 
 func (m MenuList) viewInterval() string {
-	outro := fmt.Sprintf("\n\n%s\n\nWaiting...Next interval %v min", m.backgroundJobResult, m.configSettings.Interval)
+	outro := fmt.Sprintf("\n\n%s\n\nWaiting...Next interval %v seconds", m.backgroundJobResult, m.configSettings.RepeatInterval)
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(textResultJob)).Render(outro)
 }
 
