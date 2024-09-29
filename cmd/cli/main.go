@@ -33,6 +33,7 @@ func main() {
 	config, _ := getConfigSettings()
 	headerX, headerIP := showHeaderPlusConfigPlusIP(config, false, false)
 	ShowMenuList(headerX, headerIP, config)
+	// fmt.Println(filepath.Abs(hp.GetLogFileName()))
 }
 
 func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, emailMenu bool) (string, string) {
@@ -41,17 +42,29 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 
 	if emailMenu {
 		var emailMethod string
+		var fromMethod string
+		var hostMethod string
+		var portMethod string
 		if config.EmailSettings.UseOutlook {
 			emailMethod = "Outlook"
+			fromMethod = "Outlook"
+			hostMethod = "EXCH"
+			portMethod = ""
 		} else if config.EmailSettings.UseSMTP {
 			emailMethod = "SMTP"
+			fromMethod = config.EmailSettings.From
+			hostMethod = config.EmailSettings.SMTPHost
+			portMethod = config.EmailSettings.SMTPPort
 		} else {
 			emailMethod = "OFF"
+			fromMethod = "-"
+			hostMethod = "-"
+			portMethod = ""
 		}
 		header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
 			hp.LipConfigSMTPStyle.Render(fmt.Sprintf("Method:%s  Host:%s:%v  From:%s To:%s",
-				emailMethod, config.EmailSettings.SMTPHost, config.EmailSettings.SMTPPort,
-				config.EmailSettings.From, config.EmailSettings.To)) + "\n" +
+				emailMethod, hostMethod, portMethod,
+				fromMethod, config.EmailSettings.To)) + "\n" +
 			hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 	} else {
 		var isps, mssCustom string
@@ -86,9 +99,7 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 }
 
 func getConfigSettings() (*configSettings, error) {
-	// exePath, _ := os.Executable()
-	// exeDir := filepath.Dir(exePath)
-	// reportX := exeDir + configFileName
+
 	configTemp := configSettings{
 		IperfS:         "0.0.0.0",
 		IperfP:         5201,
@@ -99,15 +110,14 @@ func getConfigSettings() (*configSettings, error) {
 		NetTest:        true,
 		ShowBrowser:    false,
 		EmailSettings: hp.EmailJob{
-			From:       "sender@domain.com",
-			To:         "recipient@domain.com",
-			Subject:    "Speed Test Report",
-			Body:       "Speed Test Report Incoming!",
-			SMTPHost:   "smtp.domain.com",
-			SMTPPort:   "587",
-			UserName:   "user",
-			PassWord:   "password",
-			Attachment: hp.GetLogFileName(),
+			From:     "sender@domain.com",
+			To:       "recipient@domain.com",
+			Subject:  "Speed Test Report",
+			Body:     "Speed Test Report Incoming!",
+			SMTPHost: "smtp.domain.com",
+			SMTPPort: "587",
+			UserName: "user",
+			PassWord: "password",
 		},
 	}
 

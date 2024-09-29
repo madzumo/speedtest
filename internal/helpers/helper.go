@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
@@ -39,6 +40,8 @@ var (
 	LipSystemMsgStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
 	LipFooterStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	LipResetStyle          = lipgloss.NewStyle()
+
+	logFileName = "logs.txt"
 )
 
 type EmailJob struct {
@@ -62,37 +65,54 @@ func NewEmailJob() *EmailJob {
 }
 
 func (e *EmailJob) SendSMTP() string {
-	// msg := "Subject: Test Email with Attachment\r\n" +
-	// 	"MIME-Version: 1.0\r\n" +
-	// 	"Content-Type: multipart/mixed; boundary=\"boundary\"\r\n\r\n" +
-	// 	"--boundary\r\n" +
-	// 	"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
-	// 	"Hello, this is a test email with an attachment.\r\n\r\n" +
-	// 	"--boundary\r\n" +
-	// 	"Content-Type: application/pdf; name=\"attachment.pdf\"\r\n" +
-	// 	"Content-Disposition: attachment; filename=\"attachment.pdf\"\r\n" +
-	// 	"Content-Transfer-Encoding: base64\r\n\r\n" +
-	// 	base64.StdEncoding.EncodeToString(attachment) + "\r\n" +
-	// 	"--boundary--\r\n"
+	fileAttach, _ := filepath.Abs(GetLogFileName())
+	e.Attachment = fileAttach
+	e.Subject = "Speed Test Report"
+	e.Body = "Speed Test report incoming!"
+	// Read the attachment file
+	attachmentData, err := os.ReadFile(e.Attachment)
+	if err != nil {
+		return fmt.Sprintf("Failed to read attachment: %v", err)
+	}
+
+	// Get the file name
+	fileName := filepath.Base(e.Attachment)
+
+	// Encode the file data as base64
+	encodedAttachment := base64.StdEncoding.EncodeToString(attachmentData)
+
+	// Create the email message
+	msg := "Subject: " + e.Subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: multipart/mixed; boundary=\"boundary\"\r\n\r\n" +
+		"--boundary\r\n" +
+		"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
+		e.Body + "\r\n\r\n" +
+		"--boundary\r\n" +
+		"Content-Type: application/octet-stream; name=\"" + fileName + "\"\r\n" +
+		"Content-Disposition: attachment; filename=\"" + fileName + "\"\r\n" +
+		"Content-Transfer-Encoding: base64\r\n\r\n" +
+		encodedAttachment + "\r\n" +
+		"--boundary--\r\n"
+
 	// Set up authentication information.
 	auth := smtp.PlainAuth("", e.From, e.PassWord, e.SMTPHost)
-	msg := "From: " + e.From + "\n" +
-		"To: " + e.To + "\n" +
-		fmt.Sprintf("Subject: %s\n\n", e.Subject) +
-		e.Body
-	// msg := []byte(e.Subject + "\n" + e.Body)                 // Compose the message.
-	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort) // Set up the SMTP server and port.
 
 	// Send the email.
-	err := smtp.SendMail(e.SMTPHost+":"+e.SMTPPort, auth, e.From, []string{e.To}, []byte(msg))
+	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort)
+	err = smtp.SendMail(smtpAddr, auth, e.From, []string{e.To}, []byte(msg))
 	if err != nil {
 		return fmt.Sprintf("Failed to send email: %v\n%s", err, smtpAddr)
 	}
 
-	return "Email sent successfully!"
+	return "Email sent!"
 }
 
 func (e *EmailJob) SendOutlook() string {
+	fileAttach, _ := filepath.Abs(GetLogFileName())
+	e.Attachment = fileAttach
+	e.Subject = "Speed Test Report"
+	e.Body = "Speed Test report incoming!"
 	// // Start Outlook programmatically if it's not open - version dependant
 	// err := exec.Command("outlook.exe").Start()
 	// if err != nil {
@@ -129,26 +149,26 @@ func (e *EmailJob) SendOutlook() string {
 	defer mail.Release()
 
 	// Set the email properties
-	oleutil.PutProperty(mail, "Subject", "Speed Test Report")
-	// oleutil.PutProperty(mail, "Body", "Speed Test Report Incoming!")
+	oleutil.PutProperty(mail, "Subject", e.Subject)
+	oleutil.PutProperty(mail, "Body", e.Body)
 	oleutil.PutProperty(mail, "To", e.To)
 
 	if e.Attachment != "" {
-		//1.Embed contents of a text file
-		fileContent, err := os.ReadFile("Speed_JB-Copper.txt")
-		if err != nil {
-			return fmt.Sprintf("Failed to read the text file: %v", err)
-		}
-		oleutil.PutProperty(mail, "Body", string(fileContent))
-
-		// // Option 2: Add an attachment
-		// attachments := oleutil.MustGetProperty(mail, "Attachments").ToIDispatch()
-		// defer attachments.Release()
-		// // Add the file as an attachment
-		// _, err = oleutil.CallMethod(attachments, "Add", e.Attachment)
+		// //1.Embed contents of a text file
+		// fileContent, err := os.ReadFile(e.Attachment)
 		// if err != nil {
-		// 	return fmt.Sprintf("Failed to add attachment: %v", err)
+		// 	return fmt.Sprintf("Failed to read the text file: %v", err)
 		// }
+		// oleutil.PutProperty(mail, "Body", string(fileContent))
+
+		// Option 2: Add an attachment
+		attachments := oleutil.MustGetProperty(mail, "Attachments").ToIDispatch()
+		defer attachments.Release()
+		// Add the file as an attachment
+		_, err = oleutil.CallMethod(attachments, "Add", e.Attachment)
+		if err != nil {
+			return fmt.Sprintf("Failed to add attachment: %v", err)
+		}
 	}
 
 	// Send the email
@@ -157,7 +177,7 @@ func (e *EmailJob) SendOutlook() string {
 		return fmt.Sprintf("Failed to send email: %v", err)
 	}
 
-	return fmt.Sprintf("Email sent successfully!\nAttach:%s", e.Attachment)
+	return "Email sent!"
 }
 
 func GetLocalIP() string {
@@ -241,7 +261,7 @@ func GetLogFileName() string {
 	if err != nil {
 		fmt.Println("Error getting hostname of client:", err)
 	} else {
-		return fmt.Sprintf("Speed_%s.txt", hostname)
+		return fmt.Sprintf("speed_%s.txt", hostname)
 	}
 	return ""
 }

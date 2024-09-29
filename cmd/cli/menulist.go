@@ -62,9 +62,9 @@ var (
 		{"Toggle Email Service (SMTP/Outlook/OFF)", ""},
 		{"Set SMTP Host", "Enter SMTP Host Address:"},
 		{"Set SMTP Port", "Enter SMTP Port Number:"},
-		{"Set Auth Username", "Enter Username to Authenticate SMTP:"},
-		{"Set Auth Password", "Enter Password to Authenticate SMTP:"},
+		// {"Set Auth Username", "Enter Username to Authenticate SMTP:"},
 		{"Set From: Address", "Enter Sender address (From:) for sending reports:"},
+		{"Set Auth Password", "Enter Password to Authenticate SMTP:"},
 		{"Set To: Address", "Enter Recipient address (To:) for sending reports:"},
 		{"Send Test Email", ""},
 		// {"Set E-Mail Subject", "Enter Subject title in outgoing report E-mail:"},
@@ -122,6 +122,7 @@ type MenuList struct {
 	jobsList            map[int]string
 	iperfError          bool
 	iperfErrorCount     int
+	sendEmailActive     bool
 }
 
 func (m MenuList) Init() tea.Cmd {
@@ -173,6 +174,11 @@ func (m *MenuList) updateMainMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.prevState = m.state
 					m.prevMenuState = m.state
 					m.state = StateSpinner
+					if (!m.configSettings.EmailSettings.UseOutlook && !m.configSettings.EmailSettings.UseSMTP) || m.choice == menuTOP[4] {
+						m.sendEmailActive = false
+					} else {
+						m.sendEmailActive = true
+					}
 					return m, tea.Batch(m.spinner.Tick, m.startBackgroundJob())
 				case menuTOP[3]:
 					m.prevState = m.state
@@ -446,22 +452,26 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 	case backgroundJobMsg:
-		//send e-mail in a go routine with Lock OS thread for bubble tea compat.
-		resultChan := make(chan string)
-		go func() {
-			runtime.LockOSThread()
-			defer runtime.UnlockOSThread()
-			emailResult := ""
-			if m.configSettings.EmailSettings.UseOutlook {
-				emailResult = m.configSettings.EmailSettings.SendOutlook()
-			}
-			if m.configSettings.EmailSettings.UseSMTP {
-				emailResult = m.configSettings.EmailSettings.SendSMTP()
-			}
-			resultChan <- emailResult
-		}()
+		if m.sendEmailActive {
+			//send e-mail in a go routine with Lock OS thread for bubble tea compat.
+			resultChan := make(chan string)
+			go func() {
+				runtime.LockOSThread()
+				defer runtime.UnlockOSThread()
+				emailResult := ""
+				if m.configSettings.EmailSettings.UseOutlook {
+					emailResult = m.configSettings.EmailSettings.SendOutlook()
+				}
+				if m.configSettings.EmailSettings.UseSMTP {
+					emailResult = m.configSettings.EmailSettings.SendSMTP()
+				}
+				resultChan <- emailResult
+			}()
+			m.backgroundJobResult = m.jobOutcome + "\n\n" + msg.result + "\n" + <-resultChan
+		} else {
+			m.backgroundJobResult = m.jobOutcome + "\n\n" + msg.result + "\n"
+		}
 
-		m.backgroundJobResult = m.jobOutcome + "\n\n" + msg.result + "\n"
 		if m.configSettings.Interval > 0 {
 			m.state = StateInterval
 			return m, m.startInverval()
@@ -574,19 +584,6 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
-				case menuSMTP[3][0]:
-					m.prevMenuState = m.state
-					m.prevState = m.state
-					m.state = StateTextInput
-					m.inputPrompt = menuSMTP[3][1]
-					m.textInput = textinput.New()
-					m.textInput.Placeholder = "e.g., Jabuticaba"
-					m.textInput.Focus()
-					m.textInput.CharLimit = 100
-					m.textInput.Width = 20
-					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
-					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
-					return m, nil
 				case menuSMTP[4][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
@@ -600,7 +597,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
-				case menuSMTP[5][0]:
+				case menuSMTP[3][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
@@ -613,7 +610,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
-				case menuSMTP[6][0]:
+				case menuSMTP[5][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
@@ -638,11 +635,11 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
 					return m, nil
-				case menuSMTP[7][0]:
+				case menuSMTP[6][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateResultDisplay
-					m.configSettings.EmailSettings.Subject = "Speed Test Engine"
+					m.configSettings.EmailSettings.Subject = "Testing Email in Speed3"
 					m.configSettings.EmailSettings.Body = "Test Message"
 					resultChan := make(chan string)
 
@@ -711,23 +708,23 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 			} else if m.jobsList[1] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
 				m.spinnerMsg = "Running Cloudflare Speed test"
-				// continueResult = t.CFTest(m.configSettings.ShowBrowser)
-				time.Sleep(3 * time.Second)
-				continueResult = "CF Job is done!"
+				continueResult = t.CFTest(m.configSettings.ShowBrowser)
+				// time.Sleep(3 * time.Second)
+				// continueResult = "CF Job is done!"
 				delete(m.jobsList, 1)
 			} else if m.jobsList[2] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("129"))
 				m.spinnerMsg = "Running MLab Speed test"
-				// continueResult = t.MLTest(m.configSettings.ShowBrowser)
-				time.Sleep(3 * time.Second)
-				continueResult = "MLab done"
+				continueResult = t.MLTest(m.configSettings.ShowBrowser)
+				// time.Sleep(3 * time.Second)
+				// continueResult = "MLab done"
 				delete(m.jobsList, 2)
 			} else if m.jobsList[3] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 				m.spinnerMsg = "Running Speedtest.NET test"
-				// continueResult = t.NETTest()
-				time.Sleep(3 * time.Second)
-				continueResult = "NET done"
+				continueResult = t.NETTest()
+				// time.Sleep(3 * time.Second)
+				// continueResult = "NET done"
 				delete(m.jobsList, 3)
 			} else if m.jobsList[4] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("156"))
@@ -735,9 +732,14 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 				if m.iperfError {
 					time.Sleep(10 * time.Second)
 				}
-				passed, result := t.IperfTest(m.configSettings.IperfS, true, m.configSettings.IperfP, m.configSettings.MSS)
+				pass, result := t.IperfTest(m.configSettings.IperfS, false, m.configSettings.IperfP, m.configSettings.MSS)
 				continueResult = result
-				if passed || m.iperfErrorCount >= 12 {
+				if pass {
+					pass, result = t.IperfTest(m.configSettings.IperfS, true, m.configSettings.IperfP, m.configSettings.MSS)
+					continueResult += "\n" + result
+				}
+
+				if pass || m.iperfErrorCount >= 12 {
 					delete(m.jobsList, 4)
 				} else {
 					iperfOut = true

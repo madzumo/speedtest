@@ -53,7 +53,6 @@ func IperfTest(serverIP string, doDownloadTest bool, portNumber int, transmissio
 					return false, "Server is busy. Retry in 10 Seconds."
 				}
 				testResult = fmt.Sprintf("%s: %.2f Mbps (MSS:%d)", direction, mbps, transmissionMSS)
-				fmt.Println(hp.LipOutputStyle.Render(testResult))
 				hp.WriteLogFile(fmt.Sprintf("🐒%s", testResult))
 			}
 		}
