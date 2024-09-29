@@ -51,6 +51,7 @@ type EmailJob struct {
 	UserName   string `json:"userName"`
 	PassWord   string `json:"passWord"`
 	UseOutlook bool   `json:"useOutlook"`
+	UseSMTP    bool   `json:"useSMTP"`
 	Attachment string `json:"attachment"`
 }
 
@@ -61,32 +62,38 @@ func NewEmailJob() *EmailJob {
 }
 
 func (e *EmailJob) SendSMTP() string {
+	// msg := "Subject: Test Email with Attachment\r\n" +
+	// 	"MIME-Version: 1.0\r\n" +
+	// 	"Content-Type: multipart/mixed; boundary=\"boundary\"\r\n\r\n" +
+	// 	"--boundary\r\n" +
+	// 	"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
+	// 	"Hello, this is a test email with an attachment.\r\n\r\n" +
+	// 	"--boundary\r\n" +
+	// 	"Content-Type: application/pdf; name=\"attachment.pdf\"\r\n" +
+	// 	"Content-Disposition: attachment; filename=\"attachment.pdf\"\r\n" +
+	// 	"Content-Transfer-Encoding: base64\r\n\r\n" +
+	// 	base64.StdEncoding.EncodeToString(attachment) + "\r\n" +
+	// 	"--boundary--\r\n"
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", e.UserName, e.PassWord, e.SMTPHost)
-
-	// Define the email headers and body.
-	from := e.From
-	to := []string{e.To}
-	subject := "Speed Test Report\n"
-	body := "Speed Test Report Incoming!.\n"
-
-	// Compose the message.
-	message := []byte(subject + "\n" + body)
-
-	// Set up the SMTP server and port.
-	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort)
+	auth := smtp.PlainAuth("", e.From, e.PassWord, e.SMTPHost)
+	msg := "From: " + e.From + "\n" +
+		"To: " + e.To + "\n" +
+		fmt.Sprintf("Subject: %s\n\n", e.Subject) +
+		e.Body
+	// msg := []byte(e.Subject + "\n" + e.Body)                 // Compose the message.
+	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort) // Set up the SMTP server and port.
 
 	// Send the email.
-	err := smtp.SendMail(smtpAddr, auth, from, to, message)
+	err := smtp.SendMail(e.SMTPHost+":"+e.SMTPPort, auth, e.From, []string{e.To}, []byte(msg))
 	if err != nil {
-		return fmt.Sprintf("Failed to send email: %v", err)
+		return fmt.Sprintf("Failed to send email: %v\n%s", err, smtpAddr)
 	}
 
 	return "Email sent successfully!"
 }
 
-func (e *EmailJob) SentOutlook(attachmentPath, sendTO string) string {
-	// // Try to start Outlook programmatically if it's not open
+func (e *EmailJob) SendOutlook() string {
+	// // Start Outlook programmatically if it's not open - version dependant
 	// err := exec.Command("outlook.exe").Start()
 	// if err != nil {
 	// 	return fmt.Sprintf("Failed to start Outlook: %v", err)
@@ -124,24 +131,24 @@ func (e *EmailJob) SentOutlook(attachmentPath, sendTO string) string {
 	// Set the email properties
 	oleutil.PutProperty(mail, "Subject", "Speed Test Report")
 	// oleutil.PutProperty(mail, "Body", "Speed Test Report Incoming!")
-	oleutil.PutProperty(mail, "To", sendTO)
+	oleutil.PutProperty(mail, "To", e.To)
 
-	if attachmentPath != "" {
-		// //1.Embed contents of a text file
-		// fileContent, err := os.ReadFile(attachmentPath)
-		// if err != nil {
-		// 	return fmt.Sprintf("Failed to read the text file: %v", err)
-		// }
-		// oleutil.PutProperty(mail, "Body", string(fileContent))
-
-		// Option 2: Add an attachment
-		attachments := oleutil.MustGetProperty(mail, "Attachments").ToIDispatch()
-		defer attachments.Release()
-		// Add the file as an attachment
-		_, err = oleutil.CallMethod(attachments, "Add", attachmentPath)
+	if e.Attachment != "" {
+		//1.Embed contents of a text file
+		fileContent, err := os.ReadFile("Speed_JB-Copper.txt")
 		if err != nil {
-			return fmt.Sprintf("Failed to add attachment: %v", err)
+			return fmt.Sprintf("Failed to read the text file: %v", err)
 		}
+		oleutil.PutProperty(mail, "Body", string(fileContent))
+
+		// // Option 2: Add an attachment
+		// attachments := oleutil.MustGetProperty(mail, "Attachments").ToIDispatch()
+		// defer attachments.Release()
+		// // Add the file as an attachment
+		// _, err = oleutil.CallMethod(attachments, "Add", e.Attachment)
+		// if err != nil {
+		// 	return fmt.Sprintf("Failed to add attachment: %v", err)
+		// }
 	}
 
 	// Send the email
@@ -150,7 +157,7 @@ func (e *EmailJob) SentOutlook(attachmentPath, sendTO string) string {
 		return fmt.Sprintf("Failed to send email: %v", err)
 	}
 
-	return "Email sent successfully!"
+	return fmt.Sprintf("Email sent successfully!\nAttach:%s", e.Attachment)
 }
 
 func GetLocalIP() string {
@@ -229,7 +236,7 @@ func InstallPlaywright() (greatSuccess bool) {
 	return greatSuccess
 }
 
-func SetLogFileName() string {
+func GetLogFileName() string {
 	hostname, err := os.Hostname()
 	if err != nil {
 		fmt.Println("Error getting hostname of client:", err)
@@ -240,7 +247,7 @@ func SetLogFileName() string {
 }
 
 func WriteLogFile(logData string) {
-	logFileName := SetLogFileName()
+	logFileName := GetLogFileName()
 	fileWriter, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Printf("failed to create/open Log file: %v\n", err)

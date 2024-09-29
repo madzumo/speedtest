@@ -43,8 +43,10 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 		var emailMethod string
 		if config.EmailSettings.UseOutlook {
 			emailMethod = "Outlook"
-		} else {
+		} else if config.EmailSettings.UseSMTP {
 			emailMethod = "SMTP"
+		} else {
+			emailMethod = "OFF"
 		}
 		header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
 			hp.LipConfigSMTPStyle.Render(fmt.Sprintf("Method:%s  Host:%s:%v  From:%s To:%s",
@@ -84,6 +86,9 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 }
 
 func getConfigSettings() (*configSettings, error) {
+	// exePath, _ := os.Executable()
+	// exeDir := filepath.Dir(exePath)
+	// reportX := exeDir + configFileName
 	configTemp := configSettings{
 		IperfS:         "0.0.0.0",
 		IperfP:         5201,
@@ -94,14 +99,15 @@ func getConfigSettings() (*configSettings, error) {
 		NetTest:        true,
 		ShowBrowser:    false,
 		EmailSettings: hp.EmailJob{
-			From:     "sender@domain.com",
-			To:       "recipient@domain.com",
-			Subject:  "Test",
-			Body:     "Test",
-			SMTPHost: "smtp.domain.com",
-			SMTPPort: "587",
-			UserName: "user",
-			PassWord: "password",
+			From:       "sender@domain.com",
+			To:         "recipient@domain.com",
+			Subject:    "Speed Test Report",
+			Body:       "Speed Test Report Incoming!",
+			SMTPHost:   "smtp.domain.com",
+			SMTPPort:   "587",
+			UserName:   "user",
+			PassWord:   "password",
+			Attachment: hp.GetLogFileName(),
 		},
 	}
 
