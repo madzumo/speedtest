@@ -23,6 +23,7 @@ type configSettings struct {
 	NetTest        bool        `json:"SpeedNetTest"`
 	ShowBrowser    bool        `json:"showBrowser"`
 	EmailSettings  hp.EmailJob `json:"emailSettings"`
+	IperfTimeout   int         `json:"iperfTimeOut"`
 }
 
 func main() {

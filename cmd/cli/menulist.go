@@ -50,13 +50,14 @@ var (
 	menuSettings = [][]string{ //menu Text + prompt text
 		{"Set Iperf Server IP", "Enter Iperf Server IP:"},
 		{"Set Iperf Port number", "Enter Iperf Port Number:"},
-		{"Set Repeat Test Interval in Minutes", "Enter Repeat Test Interval in Minutes:"},
-		{"Set MSS Size", "Enter Maximum Segment Size (MSS) for Iperf Test:"},
 		{"Configure Email Settings", ""},
 		{"Toggle CloudFlare Test", ""},
 		{"Toggle M-Labs Test", ""},
 		{"Toggle Speedtest.net", ""},
 		{"Toggle Show Browser on Speed Tests", ""},
+		{"Set Repeat Test Interval in Minutes", "Enter Repeat Test Interval in Minutes:"},
+		{"Set MSS Size", "Enter Maximum Segment Size (MSS) for Iperf Test:"},
+		{"Set Iperf Retry Timeout", "Enter Max seconds Iperf will Retry before Cancelling Test:"},
 	}
 	menuSMTP = [][]string{ //menu Text + prompt text
 		{"Toggle Email Service (SMTP/Outlook/OFF)", ""},
@@ -225,35 +226,44 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.configSettings.IperfP = i
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
-					m.backgroundJobResult = fmt.Sprintf("Iperf Port Number set to %s.", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Iperf Port Number set -> %s.", inputValue)
 				}
 			case menuSettings[0][1]:
-				m.backgroundJobResult = fmt.Sprintf("Iperf Server IP set to %s.", inputValue)
+				m.backgroundJobResult = fmt.Sprintf("Iperf Server IP set -> %s.", inputValue)
 				m.configSettings.IperfS = inputValue
 				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
 
-			case menuSettings[2][1]:
+			case menuSettings[7][1]:
 				if i, err := strconv.Atoi(inputValue); err != nil {
 					m.backgroundJobResult = fmt.Sprintf("Invalid entry for Minutes: %s", inputValue)
 					m.textInputError = true
 				} else {
 					m.configSettings.Interval = i
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
-					m.backgroundJobResult = fmt.Sprintf("Repeat Test Interval set to %s minutes.", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Repeat Test Interval set -> %s minutes.", inputValue)
 				}
-			case menuSettings[3][1]:
+			case menuSettings[8][1]:
 				if i, err := strconv.Atoi(inputValue); err != nil {
 					m.backgroundJobResult = fmt.Sprintf("Invalid entry for MSS: %s", inputValue)
 					m.textInputError = true
 				} else {
 					m.configSettings.MSS = i
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
-					m.backgroundJobResult = fmt.Sprintf("MSS set to %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("MSS set -> %s", inputValue)
+				}
+			case menuSettings[9][1]:
+				if i, err := strconv.Atoi(inputValue); err != nil {
+					m.backgroundJobResult = fmt.Sprintf("Invalid entry for Iperf Retry Timeout: %s", inputValue)
+					m.textInputError = true
+				} else {
+					m.configSettings.IperfTimeout = i
+					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
+					m.backgroundJobResult = fmt.Sprintf("Iperf Retry Timeout set -> %s", inputValue)
 				}
 			case menuSMTP[1][1]:
 				m.configSettings.EmailSettings.SMTPHost = inputValue
 				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-				m.backgroundJobResult = fmt.Sprintf("SMTP Host set to: %s", inputValue)
+				m.backgroundJobResult = fmt.Sprintf("SMTP Host set -> %s", inputValue)
 
 			case menuSMTP[2][1]:
 				if _, err := strconv.Atoi(inputValue); err != nil { //validate port number
@@ -262,35 +272,35 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.configSettings.EmailSettings.SMTPPort = inputValue
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-					m.backgroundJobResult = fmt.Sprintf("SMTP Port Number set to: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("SMTP Port Number set -> %s", inputValue)
 				}
-			case menuSMTP[3][1]:
-				m.configSettings.EmailSettings.UserName = inputValue
-				m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-				m.backgroundJobResult = fmt.Sprintf("SMTP Auth Username set to: %s", inputValue)
+			// case menuSMTP[3][1]:
+			// 	m.configSettings.EmailSettings.UserName = inputValue
+			// 	m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
+			// 	m.backgroundJobResult = fmt.Sprintf("SMTP Auth Username set -> %s", inputValue)
 
 			case menuSMTP[4][1]:
 				m.configSettings.EmailSettings.PassWord = inputValue
-				m.backgroundJobResult = fmt.Sprintf("SMTP Auth Password set to: %s", inputValue)
+				m.backgroundJobResult = fmt.Sprintf("SMTP Auth Password set -> %s", inputValue)
 
-			case menuSMTP[5][1]:
+			case menuSMTP[3][1]:
 				if err := checkmail.ValidateFormat(inputValue); err != nil {
 					m.backgroundJobResult = fmt.Sprintf("Not a valid E-mail Address: %s", inputValue)
 					m.textInputError = true
 				} else {
 					m.configSettings.EmailSettings.From = inputValue
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-					m.backgroundJobResult = fmt.Sprintf("Sender (From) address set to: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Sender (From) address set -> %s", inputValue)
 				}
 
-			case menuSMTP[6][1]:
+			case menuSMTP[5][1]:
 				if err := checkmail.ValidateFormat(inputValue); err != nil {
 					m.backgroundJobResult = fmt.Sprintf("Not a valid E-mail Address: %s", inputValue)
 					m.textInputError = true
 				} else {
 					m.configSettings.EmailSettings.To = inputValue
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, false, true)
-					m.backgroundJobResult = fmt.Sprintf("Recipient (To) address set to: %s", inputValue)
+					m.backgroundJobResult = fmt.Sprintf("Recipient (To) address set -> %s", inputValue)
 				}
 			}
 			m.prevState = m.state
@@ -354,11 +364,11 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.Width = 20
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
-				case menuSettings[2][0]:
+				case menuSettings[7][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
-					m.inputPrompt = menuSettings[2][1]
+					m.inputPrompt = menuSettings[7][1]
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., 10"
 					m.textInput.Focus()
@@ -367,11 +377,11 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
-				case menuSettings[3][0]:
+				case menuSettings[8][0]:
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
-					m.inputPrompt = menuSettings[3][1]
+					m.inputPrompt = menuSettings[8][1]
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., 1450"
 					m.textInput.Focus()
@@ -380,7 +390,20 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
-				case menuSettings[4][0]:
+				case menuSettings[9][0]:
+					m.prevMenuState = m.state
+					m.prevState = m.state
+					m.state = StateTextInput
+					m.inputPrompt = menuSettings[9][1]
+					m.textInput = textinput.New()
+					m.textInput.Placeholder = "e.g., 120"
+					m.textInput.Focus()
+					m.textInput.CharLimit = 5
+					m.textInput.Width = 20
+					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
+					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
+					return m, nil
+				case menuSettings[2][0]:
 					m.list.Title = "Main Menu->Settings->SMTP"
 					selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color(menuSMTPcolor))
 					m.list.Styles.Title = lipgloss.NewStyle().MarginLeft(2).Foreground(lipgloss.Color(menuSMTPcolor))
@@ -389,7 +412,7 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = StateSMTPMenu
 					m.updateListItems()
 					return m, nil
-				case menuSettings[5][0]:
+				case menuSettings[3][0]:
 					if m.configSettings.CloudFrontTest {
 						m.configSettings.CloudFrontTest = false
 					} else {
@@ -397,7 +420,7 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
 					return m, nil
-				case menuSettings[6][0]:
+				case menuSettings[4][0]:
 					if m.configSettings.MLabTest {
 						m.configSettings.MLabTest = false
 					} else {
@@ -405,7 +428,7 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
 					return m, nil
-				case menuSettings[7][0]:
+				case menuSettings[5][0]:
 					if m.configSettings.NetTest {
 						m.configSettings.NetTest = false
 					} else {
@@ -413,7 +436,7 @@ func (m *MenuList) updateSettingsMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.header, _ = showHeaderPlusConfigPlusIP(m.configSettings, true, false)
 					return m, nil
-				case menuSettings[8][0]:
+				case menuSettings[6][0]:
 					if m.configSettings.ShowBrowser {
 						m.configSettings.ShowBrowser = false
 					} else {
@@ -697,8 +720,14 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 				os.Stdout = tempOut
 				os.Stderr = tempErr
 
-				hp.InstallPlaywright()
+				pass, result := hp.InstallPlaywright()
 
+				if !pass {
+					continueResult = fmt.Sprintf("Error Installing Components need for Tests. Internet is inaccessible:\n%s", result)
+					for k := range m.jobsList {
+						delete(m.jobsList, k)
+					}
+				}
 				// Reset stdout and stderr after installation
 				os.Stdout = stdout
 				os.Stderr = stderr
@@ -754,7 +783,7 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 			}
 			return continueJobs{jobResult: continueResult, iperfError: iperfOut}
 		} else {
-			return backgroundJobMsg{result: "Completed successfully!"}
+			return backgroundJobMsg{result: "All Tests Completed!"}
 		}
 	}
 }
