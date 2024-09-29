@@ -5,18 +5,19 @@ A self running app that performs network bandwidth speed test.
 It uses [speedtest.net](https://www.speedtest.net/), [Cloud Flare](https://speed.cloudflare.com/) and [MLabs](https://speed.measurementlab.net/#/) for the Internet test. For the direct server test [Iperf 3.0](https://iperf.fr/iperf-download.php) is used.
 
 ## Features
-- Allows you to run Iperf tests on multiple clients simultaneously to just one Iperf3 server.
-- Allows you to run multiple Internet speed test for comparison.
-- Runs consistenly at whatever interval times you desire (0 min is the default meaning run ONCE).
+- Run Iperf tests on multiple clients simultaneously to just one Iperf3 server.
+- Run multiple Internet speed tests for comparison.
+- Repeat tests consistenly at minute interval times (0 min is the default meaning run ONCE).
 - Saves the result to a log file in the same location as the executable for documentation.
-- Runs Internet speed test on each pass to document client host bandwidth when performing the iper3 test.
+- Run All tests together or seperately as one time test or on continuous interval.
 - Allows you to save a congifuration file to distribute settings to other users.
-- Can send e-mail of test results to desired e-mail recipient.
+- Send e-mail of test results to desired e-mail recipient using direct SMTP or plug into Outlook desktop.
 - Options you can change: 
     - Port number of the Iperf server
     - Repeat test time interval
     - MSS segment size for advanced LAN testing with Iperf3
-    - Perform Internet test while viewing the result directly from testing website
+    - View browser with Cloudflare & MLabs speed test
+    - Custom Email settings
 
 ## How to Run
 - Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change.
@@ -26,11 +27,11 @@ iperf3 -s -p 5201
 ```
 
 - Run latest .exe release
-- **Option 1**: to run All tests. Internet Speed test and Iperf3.
+- **Option 1**: Run All tests. Selected Internet Speed test and Iperf3.
 - **Option 2**: Internet speeds tests only.
 - **Option 3**: Iperf test only.
 - **Option 4**: Change additional settings which are shown green in the toolbar.
-- **Option 5**: Save configuration as 'settings.json' in current directory for sharing in network.
+- **Option 5**: Save configuration as 'settings.json' in current directory.
 
 
 ![Menu](media/speed3.png)
