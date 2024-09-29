@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"bufio"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -30,16 +29,12 @@ var (
                                                                   
 `
 	LipStandardStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Bold(true)
-	LipStandard2Style      = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
 	LipHeaderStyle         = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("127"))
 	LipConfigStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
 	LipConfigSettingsStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("111"))
 	LipConfigSMTPStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("184"))
-	LipOutputStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("22"))
 	LipErrorStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("231")).Background(lipgloss.Color("196")) //231 white
-	LipSystemMsgStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
 	LipFooterStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	LipResetStyle          = lipgloss.NewStyle()
 )
 
 type EmailJob struct {
@@ -199,11 +194,11 @@ func ClearTerminalScreen() {
 	// cmd.Run()
 }
 
-func PauseTerminalScreen() {
-	fmt.Println(LipResetStyle.Render("\n"))
-	fmt.Println(LipStandardStyle.Render("Press 'Enter' to continue...."))
-	bufio.NewReader(os.Stdin).ReadBytes('\n')
-}
+// func PauseTerminalScreen() {
+// 	fmt.Println(LipResetStyle.Render("\n"))
+// 	fmt.Println(LipStandardStyle.Render("Press 'Enter' to continue...."))
+// 	bufio.NewReader(os.Stdin).ReadBytes('\n')
+// }
 
 func IsPortOpen(serverIP string, port int) bool {
 	address := fmt.Sprintf("%s:%d", serverIP, port)
@@ -243,15 +238,12 @@ func SetPEMfiles() {
 	}
 }
 
-func InstallPlaywright() (greatSuccess bool) {
-	greatSuccess = true
+func InstallPlaywright() (bool, string) {
 	if err := playwright.Install(&playwright.RunOptions{Browsers: []string{"chromium"}}); err != nil {
-		fmt.Println(LipErrorStyle.Render(fmt.Sprintf("could not install Playwright: %v\n", err)))
-		PauseTerminalScreen()
-		greatSuccess = false
+		return false, fmt.Sprintf("could not install Playwright: %v\n", err)
 	}
 	// ClearTerminalScreen()
-	return greatSuccess
+	return true, ""
 }
 
 func GetLogFileName() string {

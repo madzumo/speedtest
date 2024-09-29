@@ -697,8 +697,14 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 				os.Stdout = tempOut
 				os.Stderr = tempErr
 
-				hp.InstallPlaywright()
+				pass, result := hp.InstallPlaywright()
 
+				if !pass {
+					continueResult = fmt.Sprintf("Error Installing Components need for Tests. Internet is inaccessible:\n%s", result)
+					for k := range m.jobsList {
+						delete(m.jobsList, k)
+					}
+				}
 				// Reset stdout and stderr after installation
 				os.Stdout = stdout
 				os.Stderr = stderr
@@ -754,7 +760,7 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 			}
 			return continueJobs{jobResult: continueResult, iperfError: iperfOut}
 		} else {
-			return backgroundJobMsg{result: "Completed successfully!"}
+			return backgroundJobMsg{result: "All Tests Completed!"}
 		}
 	}
 }
