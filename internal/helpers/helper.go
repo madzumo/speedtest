@@ -40,8 +40,6 @@ var (
 	LipSystemMsgStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("232")).Background(lipgloss.Color("170")) //232 black
 	LipFooterStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	LipResetStyle          = lipgloss.NewStyle()
-
-	logFileName = "logs.txt"
 )
 
 type EmailJob struct {
