@@ -57,55 +57,63 @@ func NewEmailJob() *EmailJob {
 	}
 }
 
-func (e *EmailJob) SendSMTP() string {
-	fileAttach, _ := filepath.Abs(GetLogFileName())
-	e.Attachment = fileAttach
-	e.Subject = "Speed Test Report"
-	e.Body = "Speed Test report incoming!"
-	// Read the attachment file
-	attachmentData, err := os.ReadFile(e.Attachment)
-	if err != nil {
-		return fmt.Sprintf("Failed to read attachment: %v", err)
-	}
-
-	// Get the file name
-	fileName := filepath.Base(e.Attachment)
-
-	// Encode the file data as base64
-	encodedAttachment := base64.StdEncoding.EncodeToString(attachmentData)
-
-	// Create the email message
+func (e *EmailJob) SendSMTP(testMSG bool) string {
 	msg := "Subject: " + e.Subject + "\r\n" +
 		"MIME-Version: 1.0\r\n" +
 		"Content-Type: multipart/mixed; boundary=\"boundary\"\r\n\r\n" +
 		"--boundary\r\n" +
 		"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
-		e.Body + "\r\n\r\n" +
-		"--boundary\r\n" +
-		"Content-Type: application/octet-stream; name=\"" + fileName + "\"\r\n" +
-		"Content-Disposition: attachment; filename=\"" + fileName + "\"\r\n" +
-		"Content-Transfer-Encoding: base64\r\n\r\n" +
-		encodedAttachment + "\r\n" +
-		"--boundary--\r\n"
+		e.Body
+
+	if !testMSG {
+		fileAttach, _ := filepath.Abs(GetLogFileName())
+		if _, err := os.Stat(fileAttach); err == nil {
+			e.Attachment = fileAttach
+			// Read the attachment file
+			attachmentData, err := os.ReadFile(e.Attachment)
+			if err != nil {
+				return fmt.Sprintf("Failed to read attachment: %v", err)
+			}
+			// Get the file name
+			fileName := filepath.Base(e.Attachment)
+
+			// Encode the file data as base64
+			encodedAttachment := base64.StdEncoding.EncodeToString(attachmentData)
+
+			// Create the email message
+			msg = "Subject: " + e.Subject + "\r\n" +
+				"MIME-Version: 1.0\r\n" +
+				"Content-Type: multipart/mixed; boundary=\"boundary\"\r\n\r\n" +
+				"--boundary\r\n" +
+				"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
+				e.Body + "\r\n\r\n" +
+				"--boundary\r\n" +
+				"Content-Type: application/octet-stream; name=\"" + fileName + "\"\r\n" +
+				"Content-Disposition: attachment; filename=\"" + fileName + "\"\r\n" +
+				"Content-Transfer-Encoding: base64\r\n\r\n" +
+				encodedAttachment + "\r\n" +
+				"--boundary--\r\n"
+		}
+	}
 
 	// Set up authentication information.
 	auth := smtp.PlainAuth("", e.From, e.PassWord, e.SMTPHost)
 
 	// Send the email.
 	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort)
-	err = smtp.SendMail(smtpAddr, auth, e.From, []string{e.To}, []byte(msg))
-	if err != nil {
+	if err := smtp.SendMail(smtpAddr, auth, e.From, []string{e.To}, []byte(msg)); err != nil {
 		return fmt.Sprintf("Failed to send email: %v\n%s", err, smtpAddr)
 	}
 
 	return "Email sent!"
 }
 
-func (e *EmailJob) SendOutlook() string {
-	fileAttach, _ := filepath.Abs(GetLogFileName())
-	e.Attachment = fileAttach
-	e.Subject = "Speed Test Report"
-	e.Body = "Speed Test report incoming!"
+func (e *EmailJob) SendOutlook(testMsg bool) string {
+	if !testMsg {
+		fileAttach, _ := filepath.Abs(GetLogFileName())
+		e.Attachment = fileAttach
+	}
+
 	// // Start Outlook programmatically if it's not open - version dependant
 	// err := exec.Command("outlook.exe").Start()
 	// if err != nil {
@@ -146,7 +154,7 @@ func (e *EmailJob) SendOutlook() string {
 	oleutil.PutProperty(mail, "Body", e.Body)
 	oleutil.PutProperty(mail, "To", e.To)
 
-	if e.Attachment != "" {
+	if e.Attachment != "" && !testMsg {
 		// //1.Embed contents of a text file
 		// fileContent, err := os.ReadFile(e.Attachment)
 		// if err != nil {

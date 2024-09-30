@@ -210,13 +210,12 @@ func (m *MenuList) updateMainMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.textInput, cmd = m.textInput.Update(msg)
-
+	m.textInputError = false
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
 			inputValue := m.textInput.Value() // User pressed enter, save the input
-			m.textInputError = false
 
 			switch m.inputPrompt {
 			case menuSettings[1][1]:
@@ -307,7 +306,8 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.state = StateResultDisplay
 			return m, nil
 		case tea.KeyEsc:
-			m.state = StateSettingsMenu
+			// m.state = StateSettingsMenu
+			m.state = m.prevState
 			return m, nil
 		}
 	}
@@ -476,6 +476,8 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case backgroundJobMsg:
 		if m.sendEmailActive {
+			m.configSettings.EmailSettings.Subject = "Speed Test Report"
+			m.configSettings.EmailSettings.Body = "Speed Test report incoming!"
 			//send e-mail in a go routine with Lock OS thread for bubble tea compat.
 			resultChan := make(chan string)
 			go func() {
@@ -483,10 +485,10 @@ func (m *MenuList) updateSpinner(msg tea.Msg) (tea.Model, tea.Cmd) {
 				defer runtime.UnlockOSThread()
 				emailResult := ""
 				if m.configSettings.EmailSettings.UseOutlook {
-					emailResult = m.configSettings.EmailSettings.SendOutlook()
+					emailResult = m.configSettings.EmailSettings.SendOutlook(false)
 				}
 				if m.configSettings.EmailSettings.UseSMTP {
-					emailResult = m.configSettings.EmailSettings.SendSMTP()
+					emailResult = m.configSettings.EmailSettings.SendSMTP(false)
 				}
 				resultChan <- emailResult
 			}()
@@ -624,7 +626,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
-					m.inputPrompt = menuSMTP[5][1]
+					m.inputPrompt = menuSMTP[3][1]
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., Its_A_Me@domain.com"
 					m.textInput.Focus()
@@ -637,7 +639,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateTextInput
-					m.inputPrompt = menuSMTP[6][1]
+					m.inputPrompt = menuSMTP[5][1]
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., Joe_Mama@domain.com"
 					m.textInput.Focus()
@@ -662,24 +664,27 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.prevMenuState = m.state
 					m.prevState = m.state
 					m.state = StateResultDisplay
-					m.configSettings.EmailSettings.Subject = "Testing Email in Speed3"
-					m.configSettings.EmailSettings.Body = "Test Message"
-					resultChan := make(chan string)
+					m.backgroundJobResult = "Activate Email Service in Email Settings"
+					if m.configSettings.EmailSettings.UseOutlook || m.configSettings.EmailSettings.UseSMTP {
+						m.configSettings.EmailSettings.Subject = "Testing Email in Speed3"
+						m.configSettings.EmailSettings.Body = "Test Message"
+						resultChan := make(chan string)
+						go func() {
+							runtime.LockOSThread()
+							defer runtime.UnlockOSThread()
 
-					go func() {
-						runtime.LockOSThread()
-						defer runtime.UnlockOSThread()
+							emailResult := ""
+							if m.configSettings.EmailSettings.UseOutlook {
+								emailResult = m.configSettings.EmailSettings.SendOutlook(true)
+							}
+							if m.configSettings.EmailSettings.UseSMTP {
+								emailResult = m.configSettings.EmailSettings.SendSMTP(true)
+							}
+							resultChan <- emailResult
+						}()
+						m.backgroundJobResult = <-resultChan
+					}
 
-						emailResult := ""
-						if m.configSettings.EmailSettings.UseOutlook {
-							emailResult = m.configSettings.EmailSettings.SendOutlook()
-						}
-						if m.configSettings.EmailSettings.UseSMTP {
-							emailResult = m.configSettings.EmailSettings.SendSMTP()
-						}
-						resultChan <- emailResult
-					}()
-					m.backgroundJobResult = <-resultChan
 					return m, nil
 				default:
 					// Simulate settings change
