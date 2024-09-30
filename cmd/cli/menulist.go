@@ -589,8 +589,8 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., mail.domain.com"
 					m.textInput.Focus()
-					m.textInput.CharLimit = 20
-					m.textInput.Width = 20
+					m.textInput.CharLimit = 50
+					m.textInput.Width = 50
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
@@ -615,8 +615,8 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., pass123"
 					m.textInput.Focus()
-					m.textInput.CharLimit = 100
-					m.textInput.Width = 20
+					m.textInput.CharLimit = 50
+					m.textInput.Width = 50
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
 					return m, nil
@@ -628,7 +628,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., Its_A_Me@domain.com"
 					m.textInput.Focus()
-					m.textInput.CharLimit = 100
+					m.textInput.CharLimit = 50
 					m.textInput.Width = 50
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
@@ -641,7 +641,7 @@ func (m *MenuList) updateSMTPMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput = textinput.New()
 					m.textInput.Placeholder = "e.g., Joe_Mama@domain.com"
 					m.textInput.Focus()
-					m.textInput.CharLimit = 100
+					m.textInput.CharLimit = 50
 					m.textInput.Width = 50
 					m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textPromptColor))
 					m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(textInputColor))
