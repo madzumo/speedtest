@@ -781,7 +781,7 @@ func (m *MenuList) startBackgroundJob() tea.Cmd {
 			} else if m.jobsList[5] != "" {
 				m.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
 				m.spinnerMsg = "Saving Settings"
-				m.spinner.Tick()
+				// m.spinner.Tick()
 				time.Sleep(1 * time.Second)
 				saveConfig(m.configSettings)
 				delete(m.jobsList, 5)
