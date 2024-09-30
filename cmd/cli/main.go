@@ -46,26 +46,30 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 		var fromMethod string
 		var hostMethod string
 		var portMethod string
+		var toMethod string
 		if config.EmailSettings.UseOutlook {
 			emailMethod = "Outlook"
 			fromMethod = "Outlook"
 			hostMethod = "EXCH"
 			portMethod = ""
+			toMethod = config.EmailSettings.To
 		} else if config.EmailSettings.UseSMTP {
 			emailMethod = "SMTP"
 			fromMethod = config.EmailSettings.From
 			hostMethod = config.EmailSettings.SMTPHost
 			portMethod = config.EmailSettings.SMTPPort
+			toMethod = config.EmailSettings.To
 		} else {
 			emailMethod = "OFF"
 			fromMethod = "-"
 			hostMethod = "-"
 			portMethod = ""
+			toMethod = "-"
 		}
 		header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
 			hp.LipConfigSMTPStyle.Render(fmt.Sprintf("Method:%s  Host:%s:%v  From:%s To:%s",
 				emailMethod, hostMethod, portMethod,
-				fromMethod, config.EmailSettings.To)) + "\n" +
+				fromMethod, toMethod)) + "\n" +
 			hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 	} else {
 		var isps, mssCustom string
