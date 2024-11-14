@@ -12,7 +12,8 @@ It uses [speedtest.net](https://www.speedtest.net/), [Cloud Flare](https://speed
 - Run All tests together or seperately as one time test or on continuous interval.
 - Allows you to save a congifuration file to distribute settings to other users.
 - Send e-mail of test results to desired e-mail recipient using direct SMTP or plug into Outlook desktop.
-- Options you can change: 
+- Options you can change:
+
     - Port number of the Iperf server
     - Repeat test time interval
     - MSS segment size for advanced LAN testing with Iperf3
@@ -20,8 +21,10 @@ It uses [speedtest.net](https://www.speedtest.net/), [Cloud Flare](https://speed
     - Custom Email settings
 
 ## How to Run
+
 - Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change
 - On server:
+
 ```
 sudo apt install iperf3
 iperf3 -s -p 5201
