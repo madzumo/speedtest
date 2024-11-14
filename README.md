@@ -20,14 +20,15 @@ It uses [speedtest.net](https://www.speedtest.net/), [Cloud Flare](https://speed
     - Custom Email settings
 
 ## How to Run
-- Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change.
+- Setup iperf on a remote server. Default port is 5201. use *-p portnumber* to change
+- On server:
 ```
 sudo apt install iperf3
 iperf3 -s -p 5201
 ```
 
-- Run latest .exe release
-- **Option 1**: Run All tests. Selected Internet Speed test and Iperf3.
+- On Client: Run latest .exe release
+- **Option 1**: Run All tests. Selected Internet Speed Tests and Iperf3.
 - **Option 2**: Internet speeds tests only.
 - **Option 3**: Iperf test only.
 - **Option 4**: Change additional settings which are shown green in the toolbar.

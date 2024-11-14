@@ -86,13 +86,13 @@ func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, email
 		}
 		if settingsMenu {
 			header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-				hp.LipConfigSettingsStyle.Render(fmt.Sprintf("Iperf:%s:%v  Timeout:%ds  MSS:%s  Tests:%s  Browser:%v  Repeat:%vs",
-					config.IperfS, config.IperfP, config.IperfTimeout, mssCustom, isps, config.ShowBrowser, config.RepeatInterval)) + "\n" +
+				hp.LipConfigSettingsStyle.Render(fmt.Sprintf("Tests:%s  Browser:%v  Iperf:%s:%v  Timeout:%ds  MSS:%s  Repeat:%vs",
+					isps, config.ShowBrowser, config.IperfS, config.IperfP, config.IperfTimeout, mssCustom, config.RepeatInterval)) + "\n" +
 				hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 		} else {
 			header = hp.LipHeaderStyle.Render(hp.MenuHeader) + "\n" +
-				hp.LipConfigStyle.Render(fmt.Sprintf("Iperf:%s:%v  Timeout:%ds  MSS:%s  Tests:%s  Browser:%v  Repeat:%vs",
-					config.IperfS, config.IperfP, config.IperfTimeout, mssCustom, isps, config.ShowBrowser, config.RepeatInterval)) + "\n" +
+				hp.LipConfigStyle.Render(fmt.Sprintf("Tests:%s  Browser:%v  Iperf:%s:%v  Timeout:%ds  MSS:%s  Repeat:%vs",
+					isps, config.ShowBrowser, config.IperfS, config.IperfP, config.IperfTimeout, mssCustom, config.RepeatInterval)) + "\n" +
 				hp.LipFooterStyle.Render(fmt.Sprintf("Your IP:%s\n\n", myIP))
 		}
 	}
