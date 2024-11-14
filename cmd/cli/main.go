@@ -27,14 +27,10 @@ type configSettings struct {
 }
 
 func main() {
-	// fig := figure.NewFigure("Welcome", "big", false)
-	// fig.Print()
-	// return
 	hp.SetPEMfiles()
 	config, _ := getConfigSettings()
 	headerX, headerIP := showHeaderPlusConfigPlusIP(config, false, false)
 	ShowMenuList(headerX, headerIP, config)
-	// fmt.Println(filepath.Abs(hp.GetLogFileName()))
 }
 
 func showHeaderPlusConfigPlusIP(config *configSettings, settingsMenu bool, emailMenu bool) (string, string) {

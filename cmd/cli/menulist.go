@@ -65,7 +65,7 @@ var (
 		{"Set SMTP Port", "Enter SMTP Port Number:"},
 		// {"Set Auth Username", "Enter Username to Authenticate SMTP:"},
 		{"Set From: Address", "Enter Sender address (From:) for sending reports:"},
-		{"Set Auth Password", "Enter Password to Authenticate SMTP:"},
+		{"Set Auth Password or Open Relay", "Input Password to Authenticate SMTP. Leave blank for Open Relay:"},
 		{"Set To: Address", "Enter Recipient address (To:) for sending reports:"},
 		{"Send Test Email", ""},
 		// {"Set E-Mail Subject", "Enter Subject title in outgoing report E-mail:"},
@@ -280,6 +280,9 @@ func (m *MenuList) updateTextInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case menuSMTP[4][1]:
 				m.configSettings.EmailSettings.PassWord = inputValue
+				if inputValue == "" {
+					inputValue = "OpenRelay"
+				}
 				m.backgroundJobResult = fmt.Sprintf("SMTP Auth Password set -> %s", inputValue)
 
 			case menuSMTP[3][1]:

@@ -97,7 +97,10 @@ func (e *EmailJob) SendSMTP(testMSG bool) string {
 	}
 
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", e.From, e.PassWord, e.SMTPHost)
+	var auth smtp.Auth = nil
+	if e.PassWord != "" {
+		auth = smtp.PlainAuth("", e.From, e.PassWord, e.SMTPHost)
+	}
 
 	// Send the email.
 	smtpAddr := fmt.Sprintf("%s:%s", e.SMTPHost, e.SMTPPort)
