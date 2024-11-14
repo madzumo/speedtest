@@ -27,7 +27,7 @@ sudo apt install iperf3
 iperf3 -s -p 5201
 ```
 
-- **On Client:** Run latest .exe release
+- On Client: Run latest .exe release
     - **Option 1**: Run All tests. Selected Internet Speed Tests and Iperf3.
     - **Option 2**: Internet speeds tests only.
     - **Option 3**: Iperf test only.
